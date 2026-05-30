@@ -152,6 +152,27 @@ extension MockTravelData {
             labels: ["+1.5% cashback", "2 payments left"],
             description: "Complete two Halyk card payments before checkout to boost hotel cashback.",
             details: .cashbackChallenge(CashbackChallengeDetails(challenge: travelChallenges[0]))
+        ),
+        ItinerarySegment(
+            segmentId: "segment-departure",
+            type: .departure,
+            title: "Return flight to Almaty",
+            date: "2026-06-15",
+            dayNumber: 4,
+            startTime: "23:45",
+            endTime: "06:10+1",
+            icon: "airplane.departure",
+            status: .planned,
+            linkedMarkerIds: ["marker-ist-airport"],
+            linkedRouteIds: [],
+            price: Money(amount: 123_000, currency: .kzt),
+            labels: ["Direct flight", "Night flight"],
+            description: "Check out before 12:00. Recommended hotel departure at 20:00.",
+            details: .departure(DepartureDetails(
+                flight: outboundFlight,
+                checkoutTime: "12:00",
+                recommendedLeaveHotelTime: "20:00"
+            ))
         )
     ]
 }

@@ -64,6 +64,38 @@ extension MockTravelData {
                         text: "Good value for Karakoy. Staff helped with airport transfer timing.",
                         pros: ["Staff", "Transport access"],
                         cons: ["Elevator can be busy"]
+                    ),
+                    HotelReview(
+                        reviewId: "review-google-002",
+                        authorName: "Damir",
+                        rating: 4.3,
+                        scale: 5,
+                        date: "2026-02-14",
+                        language: "ru",
+                        title: "Great rooftop",
+                        text: "Breakfast on the rooftop with Galata Tower view is absolutely worth it. Room was cosy if small.",
+                        pros: ["Rooftop breakfast", "View"],
+                        cons: ["Small room", "No elevator to top floor"]
+                    )
+                ]
+            ),
+            HotelReviewsSourceGroup(
+                source: .tripadvisor,
+                totalReviews: 289,
+                averageRating: 4.4,
+                scale: 5,
+                reviews: [
+                    HotelReview(
+                        reviewId: "review-ta-001",
+                        authorName: "Sophia",
+                        rating: 4.5,
+                        scale: 5,
+                        date: "2026-01-22",
+                        language: "en",
+                        title: "Lovely boutique feel",
+                        text: "Charming hotel with attentive staff and a perfect Galata location. Great for exploring on foot.",
+                        pros: ["Location", "Staff", "Atmosphere"],
+                        cons: ["Wi-Fi spotty on lower floors"]
                     )
                 ]
             )
@@ -82,6 +114,7 @@ extension MockTravelData {
             distanceToAirportKm: 39.5,
             taxiFromAirport: Money(amount: 19_000, currency: .kzt),
             distanceToMainClusterKm: 1.2,
+            distanceToBeachKm: 0.35,
             averageTaxiToActivities: Money(amount: 2_800, currency: .kzt),
             walkablePlacesCount: 9,
             locationScore: 9.1,

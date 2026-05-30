@@ -13,4 +13,17 @@ extension MockTravelData {
         cabinClass: .economy,
         price: Money(amount: 123_000, currency: .kzt)
     )
+
+    static let outboundFlight = FlightInfo(
+        fromAirport: "IST",
+        toAirport: "ALA",
+        airline: "Air Astana",
+        flightNumber: "KC912",
+        departureTime: "2026-06-15T23:45:00+03:00",
+        arrivalTime: "2026-06-16T06:10:00+05:00",
+        durationMinutes: 325,
+        stops: 0,
+        cabinClass: .economy,
+        price: Money(amount: 123_000, currency: .kzt)
+    )
 }

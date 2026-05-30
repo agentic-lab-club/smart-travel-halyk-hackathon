@@ -3,6 +3,7 @@ import MapKit
 
 struct TripMapView: View {
     @Bindable var viewModel: SelectedTripViewModel
+    var isFullScreen: Bool = false
 
     var body: some View {
         Map(position: $viewModel.cameraPosition) {
@@ -35,8 +36,9 @@ struct TripMapView: View {
         }
         .mapStyle(.standard(elevation: .flat))
         .mapControls { }
-        .frame(height: 248)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .frame(height: isFullScreen ? nil : 248)
+        .frame(maxWidth: .infinity, maxHeight: isFullScreen ? .infinity : nil)
+        .clipShape(RoundedRectangle(cornerRadius: isFullScreen ? 0 : 16))
     }
 }
 

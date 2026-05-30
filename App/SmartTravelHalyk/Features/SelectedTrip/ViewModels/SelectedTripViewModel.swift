@@ -7,9 +7,16 @@ import SwiftUI
 @Observable
 final class SelectedTripViewModel {
     let trip: TripDetailsResponse
+    /// Mutable copy of the itinerary — the user can delete or add AI-suggested places.
+    var segments: [ItinerarySegment]
     var selectedMode: TripMode
     var selectedSegmentId: String?
     var cameraPosition: MapCameraPosition
+    var selectedHotelRoomId: String
+    var adultCount: Int
+    var childCount: Int
+
+    var peopleCount: Int { adultCount + childCount }
 
     var currentModeVariant: ModeVariant? { trip.modeVariants[selectedMode] }
 
@@ -35,8 +42,16 @@ final class SelectedTripViewModel {
     }
 
     var hotelSegment: ItinerarySegment? {
+        // Always read from the immutable trip — hotel is never replaceable.
         trip.segments.first { seg in
             if case .hotel = seg.details { return true }
+            return false
+        }
+    }
+
+    var departureSegment: ItinerarySegment? {
+        trip.segments.first { seg in
+            if case .departure = seg.details { return true }
             return false
         }
     }
@@ -53,12 +68,54 @@ final class SelectedTripViewModel {
 
     init(trip: TripDetailsResponse) {
         self.trip = trip
+        self.segments = trip.segments
         self.selectedMode = trip.selectedMode
         let cam = trip.map.initialCamera
         cameraPosition = .region(MKCoordinateRegion(
             center: CLLocationCoordinate2D(latitude: cam.centerLat, longitude: cam.centerLng),
             span: MKCoordinateSpan(latitudeDelta: 0.22, longitudeDelta: 0.22)
         ))
+        selectedHotelRoomId = trip.segments.compactMap { seg -> String? in
+            if case .hotel(let h) = seg.details { return h.selectedRoomId }
+            return nil
+        }.first ?? ""
+        adultCount = trip.peopleCount
+        childCount = 0
+    }
+
+    // MARK: - Segment CRUD
+
+    func deleteSegment(_ segmentId: String) {
+        if selectedSegmentId == segmentId { selectedSegmentId = nil }
+        withAnimation(.smooth(duration: 0.3)) {
+            segments.removeAll { $0.segmentId == segmentId }
+        }
+    }
+
+    func replaceSegment(_ segmentId: String, with newSegment: ItinerarySegment) {
+        guard let idx = segments.firstIndex(where: { $0.segmentId == segmentId }) else { return }
+        withAnimation(.smooth(duration: 0.3)) {
+            segments[idx] = newSegment
+        }
+    }
+
+    /// Inserts a new AI-suggested segment before the last non-replaceable tail
+    /// (checkout / departure), so it appears at the end of the visit days.
+    func addSegment(_ segment: ItinerarySegment) {
+        let insertIdx = segments.lastIndex(where: {
+            $0.type == .departure || $0.type == .checkout
+        }) ?? segments.endIndex
+        withAnimation(.smooth(duration: 0.3)) {
+            segments.insert(segment, at: insertIdx)
+        }
+    }
+
+    /// The last day-itinerary segment — used to inherit date/city for AI suggestions.
+    var lastDaySegment: ItinerarySegment? {
+        segments.last { seg in
+            if case .dayItinerary = seg.details { return true }
+            return false
+        }
     }
 
     static var preview: SelectedTripViewModel {
@@ -71,7 +128,7 @@ final class SelectedTripViewModel {
             selectedSegmentId = deselecting ? nil : segmentId
         }
         guard !deselecting,
-              let segment = trip.segments.first(where: { $0.segmentId == segmentId }),
+              let segment = segments.first(where: { $0.segmentId == segmentId }),
               let markerId = segment.linkedMarkerIds.first,
               let marker = trip.map.markers.first(where: { $0.markerId == markerId }) else { return }
         focusMap(lat: marker.lat, lng: marker.lng)
