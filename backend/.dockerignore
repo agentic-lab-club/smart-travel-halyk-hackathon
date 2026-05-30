@@ -1,0 +1,71 @@
+.specstory/
+docs/ai-sessions
+
+# Git
+.git
+.gitignore
+.github
+
+# Documentation
+*.md
+!README.md
+
+# CI/CD and deployment scripts
+.github/
+devops/
+docker-compose*.yml
+Makefile
+
+# Development configs and examples
+config.local.yaml
+config.example.yaml
+config/config.local.yaml
+config/config.example.yaml
+config/*.example
+
+# Service account keys (security)
+*.pem
+*.key
+*.json
+!go.sum
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Build artifacts
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+bin/
+dist/
+build/
+main
+.gocache/
+.gomodcache/
+.gotmp/
+.cache
+
+# Test files and coverage
+*_test.go
+**/*_test.go
+*.test
+*.out
+coverage.*
+.coverage
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.log
+
+# Docker
+Dockerfile*
+.dockerignore
