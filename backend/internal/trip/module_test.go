@@ -52,6 +52,33 @@ func TestTripFlowCreateChatConfirm(t *testing.T) {
 	}
 }
 
+func TestCreateTripSeedsDraftFromTitle(t *testing.T) {
+	app := newTripTestApp(t)
+
+	createResp := performJSONRequest(t, app, http.MethodPost, "/api/v1/trips", map[string]any{
+		"title": "Family trip to Japan in July with budget 900000 from Almaty and Kazakhstan passport",
+	})
+	if createResp.StatusCode != http.StatusCreated {
+		t.Fatalf("create trip status = %d; want %d", createResp.StatusCode, http.StatusCreated)
+	}
+
+	var created TripDetailsResponse
+	decodeTripResponse(t, createResp, &created)
+
+	if created.Trip.DestinationCountry != "Japan" {
+		t.Fatalf("destination_country = %q; want %q", created.Trip.DestinationCountry, "Japan")
+	}
+	if created.Trip.DestinationCity != "Tokyo" {
+		t.Fatalf("destination_city = %q; want %q", created.Trip.DestinationCity, "Tokyo")
+	}
+	if created.Trip.Budget != 900000 {
+		t.Fatalf("budget = %d; want %d", created.Trip.Budget, 900000)
+	}
+	if created.Trip.Status == StatusDraft {
+		t.Fatalf("status = %q; want non-draft initialized state", created.Trip.Status)
+	}
+}
+
 func newTripTestApp(t *testing.T) *fiber.App {
 	t.Helper()
 	app := fiber.New()

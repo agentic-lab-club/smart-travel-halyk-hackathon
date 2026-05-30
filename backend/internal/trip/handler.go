@@ -30,7 +30,7 @@ func NewHandler(service *Service) *Handler {
 func (h *Handler) CreateTrip(c fiber.Ctx) error {
 	c.Locals("log").(*zerolog.Logger).Info().Str("event", "trip_create_start").Msg("Create trip started")
 	dto := c.Locals("body").(CreateTripDTO)
-	data, err := h.service.CreateTrip(dto)
+	data, err := h.service.CreateTrip(c.Context(), dto)
 	if err != nil {
 		return respond.ErrorStatus(c, err, fiber.StatusInternalServerError)
 	}

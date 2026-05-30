@@ -33,64 +33,92 @@ definitions:
   trip.ActivityItem:
     properties:
       currency:
+        example: KZT
         type: string
       day_label:
+        example: Day 1
         type: string
       description:
+        example: Cultural first-day itinerary stop
         type: string
       id:
+        example: f42f0f73-f08d-4ca6-a74f-e15a028ef70e
         type: string
       kind:
+        example: place
         type: string
       location:
+        example: Tokyo
         type: string
       manually_added:
+        example: false
         type: boolean
       price:
+        example: 16000
         type: integer
       source_link:
+        example: https://maps.google.com/?q=Sensoji
         type: string
       source_name:
+        example: Google Maps
         type: string
       title:
+        example: Asakusa and Senso-ji
         type: string
     type: object
   trip.BudgetSummary:
     properties:
       bonus_amount:
+        example: 18580
         type: integer
       cashback_amount:
+        example: 46450
         type: integer
       currency:
+        example: KZT
         type: string
       estimated_food_total:
+        example: 84000
         type: integer
       estimated_local_transport_total:
+        example: 36000
         type: integer
       events_total:
+        example: 37000
         type: integer
       grand_total:
+        example: 929000
         type: integer
       halyk_offer_label:
+        example: Pay fully with Halyk mock card and unlock cashback
         type: string
       hotel_total:
+        example: 355000
         type: integer
       insurance_estimate:
+        example: 22000
         type: integer
       transport_total:
+        example: 395000
         type: integer
     type: object
   trip.ChatMessage:
     properties:
       action:
+        example: collect_fields
         type: string
       content:
+        example: I collected part of the family trip context. I still need a few fields
+          before building the full plan.
         type: string
       created_at:
+        example: "2026-05-30T20:11:54Z"
         type: string
       id:
+        example: 6dcdb6a0-c86c-4d1d-8d03-1201f2fbe19f
         type: string
       role:
+        example: assistant
         type: string
       structured:
         additionalProperties:
@@ -100,8 +128,10 @@ definitions:
   trip.ChatMessageDTO:
     properties:
       action:
+        example: collect_fields
         type: string
       content:
+        example: Change the hotel to a more budget-friendly option near Shinjuku.
         minLength: 2
         type: string
     required:
@@ -110,6 +140,10 @@ definitions:
   trip.ChatResponse:
     properties:
       assistant_hints:
+        example:
+        - Weather and seasonality are shown as guidance
+        - ' not real-time facts.'
+        - AI suggestions should be checked again closer to departure.
         items:
           type: string
         type: array
@@ -118,15 +152,21 @@ definitions:
           $ref: '#/definitions/trip.ChatMessage'
         type: array
       missing_fields:
+        example:
+        - start_date
+        - end_date
         items:
           type: string
         type: array
       session_id:
+        example: fbc99327-dcb9-4d3e-9367-29c618a5904c
         type: string
     type: object
   trip.CreateTripDTO:
     properties:
       title:
+        example: Family trip to Japan in July with budget 900000 from Almaty and Kazakhstan
+          passport
         minLength: 3
         type: string
     required:
@@ -135,43 +175,61 @@ definitions:
   trip.HotelOption:
     properties:
       currency:
+        example: KZT
         type: string
       description:
+        example: Central stay for family and solo travelers
         type: string
       id:
+        example: 314ffcbe-5599-4865-aa43-95e5f6f9845a
         type: string
       location:
+        example: Shinjuku
         type: string
       name:
+        example: Tokyo Family Smart Hotel
         type: string
       price:
+        example: 355000
         type: integer
       provider:
+        example: Booking Mock
         type: string
       rating:
+        example: 4.8
         type: number
       review_link:
+        example: https://maps.google.com/?q=Shinjuku+hotel
         type: string
       selected:
+        example: true
         type: boolean
     type: object
   trip.ManualActivityDTO:
     properties:
       day_label:
+        example: Day 3
         type: string
       description:
+        example: Manual event insertion from the selection screen
         type: string
       kind:
+        example: event
         type: string
       location:
+        example: Tokyo
         type: string
       price:
+        example: 21000
         type: integer
       source_link:
+        example: https://kino.kz
         type: string
       source_name:
+        example: Kino.kz
         type: string
       title:
+        example: Kino.kz Anime Event Pick
         type: string
     required:
     - day_label
@@ -182,12 +240,19 @@ definitions:
   trip.OfferSummary:
     properties:
       bonus_amount:
+        example: 18580
         type: integer
       cashback_amount:
+        example: 46450
         type: integer
       halyk_offer:
+        example: Pay fully with Halyk mock card and unlock cashback
         type: string
       highlights:
+        example:
+        - Mock cashback applied on full Halyk payment
+        - Bonus estimate included for pitch and UI
+        - Kino.kz suggestions included where relevant
         items:
           type: string
         type: array
@@ -195,142 +260,204 @@ definitions:
   trip.PatchTripDTO:
     properties:
       budget:
+        example: 900000
         type: integer
       citizenship:
+        example: Kazakhstan
         type: string
       destination_city:
+        example: Tokyo
         type: string
       destination_country:
+        example: Japan
         type: string
       end_date:
+        example: "2026-07-17"
         type: string
       event_interest:
+        example: true
         type: boolean
       hotel_preferences:
+        example:
+        - family-friendly
+        - city-center
         items:
           type: string
         type: array
       insurance_needed:
+        example: true
         type: boolean
       interests:
+        example:
+        - culture
+        - food
+        - events
         items:
           type: string
         type: array
       origin_city:
+        example: Almaty
         type: string
       start_date:
+        example: "2026-07-10"
         type: string
       transport_type:
+        example: flight
         type: string
       travelers:
         items:
           $ref: '#/definitions/trip.TravelerInput'
         type: array
       trip_purpose:
+        example: family
         type: string
     type: object
   trip.ReviewSummary:
     properties:
       id:
+        example: 9c0b3bb5-42fc-4ae8-8db2-1aa02d9a20e0
         type: string
       kind:
+        example: hotel
         type: string
       source_link:
+        example: https://tripadvisor.com
         type: string
       source_name:
+        example: Tripadvisor
         type: string
       summary:
+        example: Review summary highlights cleanliness, transit access, and family
+          room comfort.
         type: string
       target_name:
+        example: Tokyo Family Smart Hotel
         type: string
     type: object
   trip.TodoItem:
     properties:
       day_label:
+        example: Day 3
         type: string
       description:
+        example: Optional event-focused option for solo travelers
         type: string
       id:
+        example: 1f7a559a-59a4-40fc-9e8b-290d0df0869d
         type: string
       kind:
+        example: event
         type: string
       link:
+        example: https://kino.kz
         type: string
       price:
+        example: 21000
         type: integer
       status:
+        example: planned
         type: string
       title:
+        example: Kino.kz Anime Event Pick
         type: string
     type: object
   trip.TodoSection:
     properties:
       id:
+        example: activities
         type: string
       items:
         items:
           $ref: '#/definitions/trip.TodoItem'
         type: array
       title:
+        example: Places and Events
         type: string
     type: object
   trip.TransportOption:
     properties:
       arrival:
+        example: "16:20"
         type: string
       currency:
+        example: KZT
         type: string
       departure:
+        example: "07:10"
         type: string
       description:
+        example: High-comfort long-haul option
         type: string
       destination:
+        example: Tokyo
         type: string
       id:
+        example: 19798767-f9b0-4ca8-8fe8-5d51706caf92
         type: string
       mode:
+        example: flight
         type: string
       origin:
+        example: Almaty
         type: string
       price:
+        example: 395000
         type: integer
       provider:
+        example: JAL Mock
         type: string
       selected:
+        example: true
         type: boolean
       title:
+        example: Almaty -> Tokyo
         type: string
     type: object
   trip.Traveler:
     properties:
       age_group:
+        example: 7-12
         type: string
       id:
+        example: 54f0dd78-8c07-4ee6-bc59-e0bd94622b0f
         type: string
       name:
+        example: Aru
         type: string
       notes:
+        example: Needs stroller-friendly routes
         type: string
       preferences:
+        example:
+        - anime
+        - parks
         items:
           type: string
         type: array
       type:
+        example: child
         type: string
     type: object
   trip.TravelerInput:
     properties:
       age_group:
+        example: 7-12
         type: string
       name:
+        example: Aru
         type: string
       notes:
+        example: Needs stroller-friendly routes
         type: string
       preferences:
+        example:
+        - anime
+        - parks
         items:
           type: string
         type: array
       type:
+        example: child
         type: string
     required:
     - age_group
@@ -343,40 +470,60 @@ definitions:
           $ref: '#/definitions/trip.ActivityItem'
         type: array
       budget:
+        example: 900000
+        type: integer
+      budget_summary:
         $ref: '#/definitions/trip.BudgetSummary'
       chat_session_id:
+        example: fbc99327-dcb9-4d3e-9367-29c618a5904c
         type: string
       citizenship:
+        example: Kazakhstan
         type: string
       created_at:
+        example: "2026-05-30T20:11:54Z"
         type: string
       destination_city:
+        example: Tokyo
         type: string
       destination_country:
+        example: Japan
         type: string
       end_date:
+        example: "2026-07-17"
         type: string
       event_interest:
+        example: false
         type: boolean
       hotel_options:
         items:
           $ref: '#/definitions/trip.HotelOption'
         type: array
       hotel_preferences:
+        example:
+        - family-friendly
+        - city-center
         items:
           type: string
         type: array
       id:
+        example: a3f94ada-373a-4816-8a9b-2d0ce79cd55e
         type: string
       insurance_needed:
+        example: true
         type: boolean
       interests:
+        example:
+        - culture
+        - food
+        - events
         items:
           type: string
         type: array
       offers:
         $ref: '#/definitions/trip.OfferSummary'
       origin_city:
+        example: Almaty
         type: string
       review_summaries:
         items:
@@ -387,10 +534,14 @@ definitions:
       selected_transport:
         $ref: '#/definitions/trip.TransportOption'
       start_date:
+        example: "2026-07-10"
         type: string
       status:
+        example: collecting_input
         type: string
       title:
+        example: Family trip to Japan in July with budget 900000 from Almaty and Kazakhstan
+          passport
         type: string
       todo_sections:
         items:
@@ -401,16 +552,23 @@ definitions:
           $ref: '#/definitions/trip.TransportOption'
         type: array
       transport_type:
+        example: flight
         type: string
       travelers:
         items:
           $ref: '#/definitions/trip.Traveler'
         type: array
       trip_purpose:
+        example: family
         type: string
       updated_at:
+        example: "2026-05-30T20:11:54Z"
         type: string
       vibe_labels:
+        example:
+        - family
+        - budget
+        - balanced
         items:
           type: string
         type: array
@@ -426,6 +584,10 @@ definitions:
       budget:
         $ref: '#/definitions/trip.BudgetSummary'
       chat_entrypoints:
+        example:
+        - Ask AI to refine the plan
+        - Ask AI about weather and season
+        - Ask AI why this hotel fits
         items:
           type: string
         type: array
@@ -455,16 +617,26 @@ definitions:
   trip.VisaInfo:
     properties:
       checklist:
+        example:
+        - Passport
+        - Application form
+        - Hotel proof
+        - Trip itinerary
+        - Insurance
         items:
           type: string
         type: array
       country:
+        example: Japan
         type: string
       notes:
+        example: Mock data for the hackathon prototype
         type: string
       recommended_lead:
+        example: Begin visa preparation 30 days before departure
         type: string
       requirement:
+        example: Prototype shows a visa-assistant style checklist
         type: string
     type: object
 host: localhost:8080

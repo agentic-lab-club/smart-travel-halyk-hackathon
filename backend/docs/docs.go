@@ -888,37 +888,48 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "currency": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "KZT"
                 },
                 "day_label": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "Day 1"
                 },
                 "description": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "Cultural first-day itinerary stop"
                 },
                 "id": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "f42f0f73-f08d-4ca6-a74f-e15a028ef70e"
                 },
                 "kind": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "place"
                 },
                 "location": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "Tokyo"
                 },
                 "manually_added": {
-                    "type": "boolean"
+                    "type": "boolean",
+                    "example": false
                 },
                 "price": {
-                    "type": "integer"
+                    "type": "integer",
+                    "example": 16000
                 },
                 "source_link": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "https://maps.google.com/?q=Sensoji"
                 },
                 "source_name": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "Google Maps"
                 },
                 "title": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "Asakusa and Senso-ji"
                 }
             }
         },
@@ -926,37 +937,48 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "bonus_amount": {
-                    "type": "integer"
+                    "type": "integer",
+                    "example": 18580
                 },
                 "cashback_amount": {
-                    "type": "integer"
+                    "type": "integer",
+                    "example": 46450
                 },
                 "currency": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "KZT"
                 },
                 "estimated_food_total": {
-                    "type": "integer"
+                    "type": "integer",
+                    "example": 84000
                 },
                 "estimated_local_transport_total": {
-                    "type": "integer"
+                    "type": "integer",
+                    "example": 36000
                 },
                 "events_total": {
-                    "type": "integer"
+                    "type": "integer",
+                    "example": 37000
                 },
                 "grand_total": {
-                    "type": "integer"
+                    "type": "integer",
+                    "example": 929000
                 },
                 "halyk_offer_label": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "Pay fully with Halyk mock card and unlock cashback"
                 },
                 "hotel_total": {
-                    "type": "integer"
+                    "type": "integer",
+                    "example": 355000
                 },
                 "insurance_estimate": {
-                    "type": "integer"
+                    "type": "integer",
+                    "example": 22000
                 },
                 "transport_total": {
-                    "type": "integer"
+                    "type": "integer",
+                    "example": 395000
                 }
             }
         },
@@ -964,19 +986,24 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "action": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "collect_fields"
                 },
                 "content": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "I collected part of the family trip context. I still need a few fields before building the full plan."
                 },
                 "created_at": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "2026-05-30T20:11:54Z"
                 },
                 "id": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "6dcdb6a0-c86c-4d1d-8d03-1201f2fbe19f"
                 },
                 "role": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "assistant"
                 },
                 "structured": {
                     "type": "object",
@@ -993,11 +1020,13 @@ const docTemplate = `{
             ],
             "properties": {
                 "action": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "collect_fields"
                 },
                 "content": {
                     "type": "string",
-                    "minLength": 2
+                    "minLength": 2,
+                    "example": "Change the hotel to a more budget-friendly option near Shinjuku."
                 }
             }
         },
@@ -1008,7 +1037,12 @@ const docTemplate = `{
                     "type": "array",
                     "items": {
                         "type": "string"
-                    }
+                    },
+                    "example": [
+                        "Weather and seasonality are shown as guidance",
+                        " not real-time facts.",
+                        "AI suggestions should be checked again closer to departure."
+                    ]
                 },
                 "messages": {
                     "type": "array",
@@ -1020,10 +1054,15 @@ const docTemplate = `{
                     "type": "array",
                     "items": {
                         "type": "string"
-                    }
+                    },
+                    "example": [
+                        "start_date",
+                        "end_date"
+                    ]
                 },
                 "session_id": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "fbc99327-dcb9-4d3e-9367-29c618a5904c"
                 }
             }
         },
@@ -1035,7 +1074,8 @@ const docTemplate = `{
             "properties": {
                 "title": {
                     "type": "string",
-                    "minLength": 3
+                    "minLength": 3,
+                    "example": "Family trip to Japan in July with budget 900000 from Almaty and Kazakhstan passport"
                 }
             }
         },
@@ -1043,34 +1083,44 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "currency": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "KZT"
                 },
                 "description": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "Central stay for family and solo travelers"
                 },
                 "id": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "314ffcbe-5599-4865-aa43-95e5f6f9845a"
                 },
                 "location": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "Shinjuku"
                 },
                 "name": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "Tokyo Family Smart Hotel"
                 },
                 "price": {
-                    "type": "integer"
+                    "type": "integer",
+                    "example": 355000
                 },
                 "provider": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "Booking Mock"
                 },
                 "rating": {
-                    "type": "number"
+                    "type": "number",
+                    "example": 4.8
                 },
                 "review_link": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "https://maps.google.com/?q=Shinjuku+hotel"
                 },
                 "selected": {
-                    "type": "boolean"
+                    "type": "boolean",
+                    "example": true
                 }
             }
         },
@@ -1084,28 +1134,36 @@ const docTemplate = `{
             ],
             "properties": {
                 "day_label": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "Day 3"
                 },
                 "description": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "Manual event insertion from the selection screen"
                 },
                 "kind": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "event"
                 },
                 "location": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "Tokyo"
                 },
                 "price": {
-                    "type": "integer"
+                    "type": "integer",
+                    "example": 21000
                 },
                 "source_link": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "https://kino.kz"
                 },
                 "source_name": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "Kino.kz"
                 },
                 "title": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "Kino.kz Anime Event Pick"
                 }
             }
         },
@@ -1113,19 +1171,27 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "bonus_amount": {
-                    "type": "integer"
+                    "type": "integer",
+                    "example": 18580
                 },
                 "cashback_amount": {
-                    "type": "integer"
+                    "type": "integer",
+                    "example": 46450
                 },
                 "halyk_offer": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "Pay fully with Halyk mock card and unlock cashback"
                 },
                 "highlights": {
                     "type": "array",
                     "items": {
                         "type": "string"
-                    }
+                    },
+                    "example": [
+                        "Mock cashback applied on full Halyk payment",
+                        "Bonus estimate included for pitch and UI",
+                        "Kino.kz suggestions included where relevant"
+                    ]
                 }
             }
         },
@@ -1133,46 +1199,65 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "budget": {
-                    "type": "integer"
+                    "type": "integer",
+                    "example": 900000
                 },
                 "citizenship": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "Kazakhstan"
                 },
                 "destination_city": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "Tokyo"
                 },
                 "destination_country": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "Japan"
                 },
                 "end_date": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "2026-07-17"
                 },
                 "event_interest": {
-                    "type": "boolean"
+                    "type": "boolean",
+                    "example": true
                 },
                 "hotel_preferences": {
                     "type": "array",
                     "items": {
                         "type": "string"
-                    }
+                    },
+                    "example": [
+                        "family-friendly",
+                        "city-center"
+                    ]
                 },
                 "insurance_needed": {
-                    "type": "boolean"
+                    "type": "boolean",
+                    "example": true
                 },
                 "interests": {
                     "type": "array",
                     "items": {
                         "type": "string"
-                    }
+                    },
+                    "example": [
+                        "culture",
+                        "food",
+                        "events"
+                    ]
                 },
                 "origin_city": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "Almaty"
                 },
                 "start_date": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "2026-07-10"
                 },
                 "transport_type": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "flight"
                 },
                 "travelers": {
                     "type": "array",
@@ -1181,7 +1266,8 @@ const docTemplate = `{
                     }
                 },
                 "trip_purpose": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "family"
                 }
             }
         },
@@ -1189,22 +1275,28 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "id": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "9c0b3bb5-42fc-4ae8-8db2-1aa02d9a20e0"
                 },
                 "kind": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "hotel"
                 },
                 "source_link": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "https://tripadvisor.com"
                 },
                 "source_name": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "Tripadvisor"
                 },
                 "summary": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "Review summary highlights cleanliness, transit access, and family room comfort."
                 },
                 "target_name": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "Tokyo Family Smart Hotel"
                 }
             }
         },
@@ -1212,28 +1304,36 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "day_label": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "Day 3"
                 },
                 "description": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "Optional event-focused option for solo travelers"
                 },
                 "id": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "1f7a559a-59a4-40fc-9e8b-290d0df0869d"
                 },
                 "kind": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "event"
                 },
                 "link": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "https://kino.kz"
                 },
                 "price": {
-                    "type": "integer"
+                    "type": "integer",
+                    "example": 21000
                 },
                 "status": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "planned"
                 },
                 "title": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "Kino.kz Anime Event Pick"
                 }
             }
         },
@@ -1241,7 +1341,8 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "id": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "activities"
                 },
                 "items": {
                     "type": "array",
@@ -1250,7 +1351,8 @@ const docTemplate = `{
                     }
                 },
                 "title": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "Places and Events"
                 }
             }
         },
@@ -1258,40 +1360,52 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "arrival": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "16:20"
                 },
                 "currency": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "KZT"
                 },
                 "departure": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "07:10"
                 },
                 "description": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "High-comfort long-haul option"
                 },
                 "destination": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "Tokyo"
                 },
                 "id": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "19798767-f9b0-4ca8-8fe8-5d51706caf92"
                 },
                 "mode": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "flight"
                 },
                 "origin": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "Almaty"
                 },
                 "price": {
-                    "type": "integer"
+                    "type": "integer",
+                    "example": 395000
                 },
                 "provider": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "JAL Mock"
                 },
                 "selected": {
-                    "type": "boolean"
+                    "type": "boolean",
+                    "example": true
                 },
                 "title": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "Almaty -\u003e Tokyo"
                 }
             }
         },
@@ -1299,25 +1413,34 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "age_group": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "7-12"
                 },
                 "id": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "54f0dd78-8c07-4ee6-bc59-e0bd94622b0f"
                 },
                 "name": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "Aru"
                 },
                 "notes": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "Needs stroller-friendly routes"
                 },
                 "preferences": {
                     "type": "array",
                     "items": {
                         "type": "string"
-                    }
+                    },
+                    "example": [
+                        "anime",
+                        "parks"
+                    ]
                 },
                 "type": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "child"
                 }
             }
         },
@@ -1329,22 +1452,30 @@ const docTemplate = `{
             ],
             "properties": {
                 "age_group": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "7-12"
                 },
                 "name": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "Aru"
                 },
                 "notes": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "Needs stroller-friendly routes"
                 },
                 "preferences": {
                     "type": "array",
                     "items": {
                         "type": "string"
-                    }
+                    },
+                    "example": [
+                        "anime",
+                        "parks"
+                    ]
                 },
                 "type": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "child"
                 }
             }
         },
@@ -1358,28 +1489,39 @@ const docTemplate = `{
                     }
                 },
                 "budget": {
+                    "type": "integer",
+                    "example": 900000
+                },
+                "budget_summary": {
                     "$ref": "#/definitions/trip.BudgetSummary"
                 },
                 "chat_session_id": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "fbc99327-dcb9-4d3e-9367-29c618a5904c"
                 },
                 "citizenship": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "Kazakhstan"
                 },
                 "created_at": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "2026-05-30T20:11:54Z"
                 },
                 "destination_city": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "Tokyo"
                 },
                 "destination_country": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "Japan"
                 },
                 "end_date": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "2026-07-17"
                 },
                 "event_interest": {
-                    "type": "boolean"
+                    "type": "boolean",
+                    "example": false
                 },
                 "hotel_options": {
                     "type": "array",
@@ -1391,25 +1533,37 @@ const docTemplate = `{
                     "type": "array",
                     "items": {
                         "type": "string"
-                    }
+                    },
+                    "example": [
+                        "family-friendly",
+                        "city-center"
+                    ]
                 },
                 "id": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "a3f94ada-373a-4816-8a9b-2d0ce79cd55e"
                 },
                 "insurance_needed": {
-                    "type": "boolean"
+                    "type": "boolean",
+                    "example": true
                 },
                 "interests": {
                     "type": "array",
                     "items": {
                         "type": "string"
-                    }
+                    },
+                    "example": [
+                        "culture",
+                        "food",
+                        "events"
+                    ]
                 },
                 "offers": {
                     "$ref": "#/definitions/trip.OfferSummary"
                 },
                 "origin_city": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "Almaty"
                 },
                 "review_summaries": {
                     "type": "array",
@@ -1424,13 +1578,16 @@ const docTemplate = `{
                     "$ref": "#/definitions/trip.TransportOption"
                 },
                 "start_date": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "2026-07-10"
                 },
                 "status": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "collecting_input"
                 },
                 "title": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "Family trip to Japan in July with budget 900000 from Almaty and Kazakhstan passport"
                 },
                 "todo_sections": {
                     "type": "array",
@@ -1445,7 +1602,8 @@ const docTemplate = `{
                     }
                 },
                 "transport_type": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "flight"
                 },
                 "travelers": {
                     "type": "array",
@@ -1454,16 +1612,23 @@ const docTemplate = `{
                     }
                 },
                 "trip_purpose": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "family"
                 },
                 "updated_at": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "2026-05-30T20:11:54Z"
                 },
                 "vibe_labels": {
                     "type": "array",
                     "items": {
                         "type": "string"
-                    }
+                    },
+                    "example": [
+                        "family",
+                        "budget",
+                        "balanced"
+                    ]
                 },
                 "visa": {
                     "$ref": "#/definitions/trip.VisaInfo"
@@ -1486,7 +1651,12 @@ const docTemplate = `{
                     "type": "array",
                     "items": {
                         "type": "string"
-                    }
+                    },
+                    "example": [
+                        "Ask AI to refine the plan",
+                        "Ask AI about weather and season",
+                        "Ask AI why this hotel fits"
+                    ]
                 },
                 "offers": {
                     "$ref": "#/definitions/trip.OfferSummary"
@@ -1530,19 +1700,30 @@ const docTemplate = `{
                     "type": "array",
                     "items": {
                         "type": "string"
-                    }
+                    },
+                    "example": [
+                        "Passport",
+                        "Application form",
+                        "Hotel proof",
+                        "Trip itinerary",
+                        "Insurance"
+                    ]
                 },
                 "country": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "Japan"
                 },
                 "notes": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "Mock data for the hackathon prototype"
                 },
                 "recommended_lead": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "Begin visa preparation 30 days before departure"
                 },
                 "requirement": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "Prototype shows a visa-assistant style checklist"
                 }
             }
         }

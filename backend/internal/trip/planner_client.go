@@ -178,10 +178,8 @@ func inferCountry(prompt string) string {
 	switch {
 	case strings.Contains(prompt, "japan") || strings.Contains(prompt, "tokyo"):
 		return "Japan"
-	case strings.Contains(prompt, "turkey") || strings.Contains(prompt, "istanbul"):
-		return "Turkey"
-	case strings.Contains(prompt, "uae") || strings.Contains(prompt, "dubai") || strings.Contains(prompt, "abu dhabi"):
-		return "UAE"
+	case strings.Contains(prompt, "germany") || strings.Contains(prompt, "berlin"):
+		return "Germany"
 	default:
 		return "Kazakhstan"
 	}
@@ -191,10 +189,8 @@ func inferCity(prompt string) string {
 	switch {
 	case strings.Contains(prompt, "tokyo") || strings.Contains(prompt, "japan"):
 		return "Tokyo"
-	case strings.Contains(prompt, "istanbul") || strings.Contains(prompt, "turkey"):
-		return "Istanbul"
-	case strings.Contains(prompt, "dubai") || strings.Contains(prompt, "uae") || strings.Contains(prompt, "abu dhabi"):
-		return "Dubai"
+	case strings.Contains(prompt, "germany") || strings.Contains(prompt, "berlin"):
+		return "Berlin"
 	default:
 		return "Almaty"
 	}

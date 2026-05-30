@@ -56,7 +56,7 @@ func TestHTTPPlannerClientMapsParseTripResponse(t *testing.T) {
 func TestHTTPPlannerClientFallsBackWhenAgentUnavailable(t *testing.T) {
 	client := NewPlannerClient(&config.Config{AIAgent: config.AIAgentConfig{URL: "http://127.0.0.1:1"}})
 	plan, err := client.Plan(context.Background(), AIPlanningRequest{
-		UserPrompt: "Solo event trip to Dubai with budget 500000",
+		UserPrompt: "Solo event trip to Berlin with budget 500000",
 		CurrentTrip: map[string]any{
 			"origin_city": "Almaty",
 			"citizenship": "Kazakhstan",
@@ -66,8 +66,8 @@ func TestHTTPPlannerClientFallsBackWhenAgentUnavailable(t *testing.T) {
 		t.Fatalf("plan error = %v", err)
 	}
 
-	if got := stringValue(plan.NormalizedFields["destination_country"], ""); got != "UAE" {
-		t.Fatalf("destination_country = %q; want UAE", got)
+	if got := stringValue(plan.NormalizedFields["destination_country"], ""); got != "Germany" {
+		t.Fatalf("destination_country = %q; want Germany", got)
 	}
 	if len(plan.VibeLabels) == 0 {
 		t.Fatalf("vibe labels are empty")

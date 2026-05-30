@@ -2,6 +2,7 @@ package trip
 
 import (
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -193,4 +194,150 @@ func cloneMap(src map[string]any) map[string]any {
 		}
 	}
 	return out
+}
+
+func (r *Repository) LoadDestinationReference(country, city string) (*destinationReference, error) {
+	if r.db == nil || r.db.DB == nil {
+		return nil, fmt.Errorf("failed to load destination reference: database is not configured")
+	}
+
+	normalizedCountry := normalizeCountry(country)
+	if strings.TrimSpace(normalizedCountry) == "" {
+		normalizedCountry = "Germany"
+	}
+
+	var countryRow countryRow
+	if err := r.db.TrackedGet(&countryRow, r.db.Rebind(`
+		SELECT country_code, name_en
+		FROM travel_countries
+		WHERE name_en = ?
+		LIMIT 1
+	`), normalizedCountry); err != nil {
+		return nil, fmt.Errorf("failed to load country reference: %w", err)
+	}
+
+	cityRow, err := r.loadCityRow(countryRow.CountryCode, city)
+	if err != nil {
+		return nil, err
+	}
+
+	ref := &destinationReference{
+		CountryCode:     countryRow.CountryCode,
+		CountryName:     countryRow.NameEn,
+		CityName:        cityRow.NameEn,
+		CityRegion:      cityRow.Region,
+		CityDescription: cityRow.Description,
+	}
+
+	if err := r.loadReferenceCollections(ref, cityRow.CityID, countryRow.CountryCode); err != nil {
+		return nil, err
+	}
+
+	ref.FoodEstimate = estimateFoodTotal(ref.CountryName)
+	ref.LocalTransportCost = estimateLocalTransportTotal(ref.CountryName)
+	ref.InsuranceEstimate = estimateInsuranceTotal(ref.CountryName)
+
+	return ref, nil
+}
+
+func (r *Repository) loadCityRow(countryCode, preferredCity string) (cityRow, error) {
+	var row cityRow
+	var err error
+
+	if strings.TrimSpace(preferredCity) != "" {
+		err = r.db.TrackedGet(&row, r.db.Rebind(`
+			SELECT city_id, country_code, name_en, region, description
+			FROM travel_cities
+			WHERE country_code = ? AND name_en = ?
+			LIMIT 1
+		`), countryCode, strings.TrimSpace(preferredCity))
+		if err == nil {
+			return row, nil
+		}
+	}
+
+	err = r.db.TrackedGet(&row, r.db.Rebind(`
+		SELECT city_id, country_code, name_en, region, description
+		FROM travel_cities
+		WHERE country_code = ?
+		ORDER BY city_id
+		LIMIT 1
+	`), countryCode)
+	if err != nil {
+		return cityRow{}, fmt.Errorf("failed to load city reference: %w", err)
+	}
+	return row, nil
+}
+
+func (r *Repository) loadReferenceCollections(ref *destinationReference, cityID int, countryCode string) error {
+	attractions := []referenceAttraction{}
+	if err := r.db.TrackedSelect(&attractions, r.db.Rebind(`
+		SELECT name_en, category, description, recommended_duration_minutes, price_level
+		FROM travel_attractions
+		WHERE city_id = ?
+		ORDER BY attraction_id
+		LIMIT 4
+	`), cityID); err != nil {
+		return fmt.Errorf("failed to load attractions: %w", err)
+	}
+
+	restaurants := []referenceRestaurant{}
+	if err := r.db.TrackedSelect(&restaurants, r.db.Rebind(`
+		SELECT name, cuisine, price_level, description, area
+		FROM popular_restaurants
+		WHERE city_id = ?
+		ORDER BY restaurant_id
+		LIMIT 2
+	`), cityID); err != nil {
+		return fmt.Errorf("failed to load restaurants: %w", err)
+	}
+
+	events := []referenceEvent{}
+	if err := r.db.TrackedSelect(&events, r.db.Rebind(`
+		SELECT name_en, category, description, travel_tip
+		FROM seasonal_events
+		WHERE country_code = ? AND (city_id = ? OR city_id IS NULL)
+		ORDER BY city_id DESC NULLS LAST, seasonal_event_id
+		LIMIT 3
+	`), countryCode, cityID); err != nil {
+		return fmt.Errorf("failed to load seasonal events: %w", err)
+	}
+
+	ref.Attractions = attractions
+	ref.Restaurants = restaurants
+	ref.Events = events
+	return nil
+}
+
+func estimateFoodTotal(country string) int {
+	switch normalizeCountry(country) {
+	case "Japan":
+		return 84000
+	case "Germany":
+		return 62000
+	default:
+		return 28000
+	}
+}
+
+func estimateLocalTransportTotal(country string) int {
+	switch normalizeCountry(country) {
+	case "Japan":
+		return 36000
+	case "Germany":
+		return 26000
+	default:
+		return 18000
+	}
+}
+
+func estimateInsuranceTotal(country string) int {
+	switch normalizeCountry(country) {
+	case "Japan":
+		return 22000
+	case "Germany":
+		return 15000
+	default:
+		return 6000
+	}
 }

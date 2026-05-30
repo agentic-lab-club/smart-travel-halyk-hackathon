@@ -20,11 +20,65 @@ func NewService(repo *Repository, planner PlannerClient, cfg *config.Config) *Se
 	return &Service{repo: repo, planner: planner, cfg: cfg}
 }
 
-func (s *Service) CreateTrip(dto CreateTripDTO) (*TripDetailsResponse, error) {
+func (s *Service) CreateTrip(ctx context.Context, dto CreateTripDTO) (*TripDetailsResponse, error) {
 	trip, err := s.repo.CreateTrip(dto.Title)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create trip: %w", err)
 	}
+
+	session, err := s.repo.GetSessionByTripID(trip.ID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load chat session for trip draft: %w", err)
+	}
+	if session == nil {
+		return nil, fmt.Errorf("failed to load chat session for trip draft: session missing")
+	}
+
+	titlePrompt := strings.TrimSpace(dto.Title)
+	if titlePrompt != "" {
+		session.Messages = append(session.Messages, ChatMessage{
+			ID:        uuid.New(),
+			Role:      "user",
+			Content:   titlePrompt,
+			Action:    "collect_fields",
+			CreatedAt: time.Now().UTC(),
+		})
+
+		plan, planErr := s.planner.Plan(ctx, AIPlanningRequest{
+			TripID:      trip.ID,
+			Action:      "collect_fields",
+			UserPrompt:  titlePrompt,
+			CurrentTrip: tripToMap(trip),
+			ChatHistory: session.Messages,
+		})
+		if planErr == nil && plan != nil {
+			s.applyAIFields(trip, plan)
+			session.Messages = append(session.Messages, ChatMessage{
+				ID:      uuid.New(),
+				Role:    "assistant",
+				Content: plan.AssistantSummary,
+				Action:  "collect_fields",
+				Structured: map[string]any{
+					"missing_fields": plan.MissingFields,
+					"vibe_labels":    plan.VibeLabels,
+				},
+				CreatedAt: time.Now().UTC(),
+			})
+			if len(plan.MissingFields) == 0 {
+				trip.Status = StatusReadyForConfirmation
+			} else {
+				trip.Status = StatusCollectingInput
+			}
+		}
+	}
+
+	if err := s.repo.SaveTrip(trip); err != nil {
+		return nil, fmt.Errorf("failed to save created trip: %w", err)
+	}
+	if err := s.repo.SaveSession(session); err != nil {
+		return nil, fmt.Errorf("failed to save created trip session: %w", err)
+	}
+
 	return s.buildDetails(trip), nil
 }
 

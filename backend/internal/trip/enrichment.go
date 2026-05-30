@@ -119,97 +119,40 @@ func (s *Service) applyAIFields(trip *Trip, plan *AIPlanningResponse) {
 }
 
 func (s *Service) enrichTripFromSeed(trip *Trip) {
-	seed := buildDestinationSeed(trip.DestinationCountry, trip.OriginCity, trip.TransportType)
-	trip.DestinationCountry = seed.Country
-	if trip.DestinationCity == "" {
-		trip.DestinationCity = seed.City
+	ref, err := s.repo.LoadDestinationReference(trip.DestinationCountry, trip.DestinationCity)
+	if err != nil {
+		ref = fallbackDestinationReference(trip.DestinationCountry, trip.DestinationCity)
 	}
 
-	trip.TransportOptions = make([]TransportOption, 0, len(seed.Transport))
-	for _, option := range seed.Transport {
-		trip.TransportOptions = append(trip.TransportOptions, TransportOption{
-			ID:          uuid.New(),
-			Mode:        option.Mode,
-			Provider:    option.Provider,
-			Title:       option.Title,
-			Origin:      option.Origin,
-			Destination: option.Destination,
-			Departure:   option.Departure,
-			Arrival:     option.Arrival,
-			Price:       option.Price,
-			Currency:    option.Currency,
-			Description: option.Description,
-		})
+	trip.DestinationCountry = ref.CountryName
+	if trip.DestinationCity == "" {
+		trip.DestinationCity = ref.CityName
 	}
+
+	trip.TransportOptions = transportOptionsFromReference(ref, trip.OriginCity, trip.TransportType)
 	if len(trip.TransportOptions) > 0 {
 		trip.TransportOptions[0].Selected = true
 		selected := trip.TransportOptions[0]
 		trip.SelectedTransport = &selected
 	}
 
-	trip.HotelOptions = make([]HotelOption, 0, len(seed.Hotels))
-	for _, option := range seed.Hotels {
-		trip.HotelOptions = append(trip.HotelOptions, HotelOption{
-			ID:          uuid.New(),
-			Provider:    option.Provider,
-			Name:        option.Name,
-			Location:    option.Location,
-			Price:       option.Price,
-			Currency:    option.Currency,
-			Rating:      option.Rating,
-			Description: option.Description,
-			ReviewLink:  option.ReviewLink,
-		})
-	}
+	trip.HotelOptions = hotelOptionsFromReference(ref)
 	if len(trip.HotelOptions) > 0 {
 		trip.HotelOptions[0].Selected = true
 		selected := trip.HotelOptions[0]
 		trip.SelectedHotel = &selected
 	}
 
-	trip.Activities = make([]ActivityItem, 0, len(seed.Activities))
-	for _, item := range seed.Activities {
-		trip.Activities = append(trip.Activities, ActivityItem{
-			ID:          uuid.New(),
-			Kind:        item.Kind,
-			Title:       item.Title,
-			Location:    item.Location,
-			DayLabel:    item.DayLabel,
-			Price:       item.Price,
-			Currency:    item.Currency,
-			SourceName:  item.SourceName,
-			SourceLink:  item.SourceLink,
-			Description: item.Description,
-		})
-	}
-
-	trip.VisaInfo = VisaInfo{
-		Country:         seed.Visa.Country,
-		Requirement:     seed.Visa.Requirement,
-		RecommendedLead: seed.Visa.RecommendedLead,
-		Checklist:       append([]string{}, seed.Visa.Checklist...),
-		Notes:           seed.Visa.Notes,
-	}
-
-	trip.ReviewSummaries = make([]ReviewSummary, 0, len(seed.Reviews))
-	for _, item := range seed.Reviews {
-		trip.ReviewSummaries = append(trip.ReviewSummaries, ReviewSummary{
-			ID:         uuid.New(),
-			Kind:       item.Kind,
-			TargetName: item.TargetName,
-			Summary:    item.Summary,
-			SourceName: item.SourceName,
-			SourceLink: item.SourceLink,
-		})
-	}
-
+	trip.Activities = activityItemsFromReference(ref)
+	trip.VisaInfo = visaInsightsForCountry(ref.CountryName)
+	trip.ReviewSummaries = reviewSummariesFromReference(ref)
 	trip.BudgetSummary = BudgetSummary{
 		TransportTotal:          selectedTransportPrice(trip),
 		HotelTotal:              selectedHotelPrice(trip),
 		EventsTotal:             activitiesTotal(trip.Activities),
-		EstimatedFoodTotal:      seed.FoodEstimate,
-		EstimatedLocalTransport: seed.LocalTransport,
-		InsuranceEstimate:       seed.InsuranceEstimate,
+		EstimatedFoodTotal:      ref.FoodEstimate,
+		EstimatedLocalTransport: ref.LocalTransportCost,
+		InsuranceEstimate:       ref.InsuranceEstimate,
 		Currency:                "KZT",
 	}
 	s.recalculateBudget(trip)
@@ -246,10 +189,6 @@ func normalizeCountry(value string) string {
 		return "Kazakhstan"
 	case "japan", "япония", "jp":
 		return "Japan"
-	case "turkey", "turkiye", "türkiye", "турция", "tr":
-		return "Turkey"
-	case "uae", "united arab emirates", "emirates", "оаэ", "ae":
-		return "UAE"
 	case "germany", "германия", "de":
 		return "Germany"
 	default:
@@ -263,10 +202,6 @@ func defaultCityForCountry(country string) string {
 		return "Almaty"
 	case "Japan":
 		return "Tokyo"
-	case "Turkey":
-		return "Istanbul"
-	case "UAE":
-		return "Dubai"
 	case "Germany":
 		return "Berlin"
 	default:
@@ -275,13 +210,13 @@ func defaultCityForCountry(country string) string {
 }
 
 func visaInsightsForCountry(country string) VisaInfo {
-	seed := buildDestinationSeed(country, "Almaty", "flight")
-	return VisaInfo{
-		Country:         seed.Visa.Country,
-		Requirement:     seed.Visa.Requirement,
-		RecommendedLead: seed.Visa.RecommendedLead,
-		Checklist:       append([]string{}, seed.Visa.Checklist...),
-		Notes:           seed.Visa.Notes,
+	switch normalizeCountry(country) {
+	case "Japan":
+		return VisaInfo{Country: "Japan", Requirement: "Prototype shows a visa-assistant style checklist", RecommendedLead: "Begin visa preparation 30 days before departure", Checklist: []string{"Passport", "Application form", "Hotel proof", "Trip itinerary", "Insurance"}, Notes: "Mock data for the hackathon prototype"}
+	case "Germany":
+		return VisaInfo{Country: "Germany", Requirement: "Visa rules depend on passport in real life; MVP shows a simplified assistant", RecommendedLead: "Check requirements 14 days before departure", Checklist: []string{"Passport validity", "Flight booking", "Hotel booking", "Travel insurance"}, Notes: "Prototype uses simplified visa assistant copy"}
+	default:
+		return VisaInfo{Country: "Kazakhstan", Requirement: "No visa required for domestic travelers in this prototype", RecommendedLead: "No lead time required", Checklist: []string{"Valid local ID", "Travel tickets", "Hotel confirmation"}, Notes: "Domestic route mock scenario"}
 	}
 }
 
@@ -289,29 +224,31 @@ func weatherInsightsForCountry(country string) []string {
 	switch normalizeCountry(country) {
 	case "Japan":
 		return []string{"Spring and autumn are the most comfortable seasons for family travel.", "Plan city days with indoor backups because weather can shift quickly."}
-	case "Turkey":
-		return []string{"Shoulder seasons usually balance comfortable weather and better pricing.", "Event and sightseeing plans work best with evening outdoor slots in warmer months."}
-	case "UAE":
-		return []string{"Outdoor-heavy itineraries fit best in cooler months.", "Daytime heat can affect family comfort, so evening activities are often better."}
+	case "Germany":
+		return []string{"Spring and early autumn usually balance comfortable weather and city walking.", "Museum and indoor options help keep family plans flexible."}
 	default:
 		return []string{"Weather and seasonality are shown as guidance, not real-time facts.", "AI suggestions should be checked again closer to departure."}
 	}
 }
 
 func reviewSummariesForCountry(country string) []ReviewSummary {
-	seed := buildDestinationSeed(country, "Almaty", "flight")
-	items := make([]ReviewSummary, 0, len(seed.Reviews))
-	for _, review := range seed.Reviews {
-		items = append(items, ReviewSummary{
-			ID:         uuid.New(),
-			Kind:       review.Kind,
-			TargetName: review.TargetName,
-			Summary:    review.Summary,
-			SourceName: review.SourceName,
-			SourceLink: review.SourceLink,
-		})
+	switch normalizeCountry(country) {
+	case "Japan":
+		return []ReviewSummary{
+			{ID: uuid.New(), Kind: "hotel", TargetName: "Tokyo Family Smart Hotel", Summary: "Review summary highlights cleanliness, transit access, and family room comfort.", SourceName: "Tripadvisor", SourceLink: "https://tripadvisor.com"},
+			{ID: uuid.New(), Kind: "place", TargetName: "Asakusa and Senso-ji", Summary: "Visitors mention strong atmosphere and easy family-friendly exploration.", SourceName: "Google Maps", SourceLink: "https://maps.google.com/?q=Sensoji"},
+		}
+	case "Germany":
+		return []ReviewSummary{
+			{ID: uuid.New(), Kind: "hotel", TargetName: "Berlin Family Central Hotel", Summary: "Guests highlight breakfast, family rooms, and proximity to major sights.", SourceName: "Tripadvisor", SourceLink: "https://tripadvisor.com"},
+			{ID: uuid.New(), Kind: "place", TargetName: "Brandenburg Gate", Summary: "Visitors rate it as a must-see stop in central Berlin.", SourceName: "Google Maps", SourceLink: "https://maps.google.com/?q=Brandenburg+Gate"},
+		}
+	default:
+		return []ReviewSummary{
+			{ID: uuid.New(), Kind: "hotel", TargetName: "Family View Almaty", Summary: "Families praise the location, breakfast, and easy access to sights.", SourceName: "Google Maps", SourceLink: "https://maps.google.com/?q=Almaty+hotel"},
+			{ID: uuid.New(), Kind: "event", TargetName: "Kino.kz Family Movie", Summary: "Easy add-on entertainment for families with children.", SourceName: "Kino.kz", SourceLink: "https://kino.kz"},
+		}
 	}
-	return items
 }
 
 func buildVibeLabels(prompt, purpose, theme string) []string {

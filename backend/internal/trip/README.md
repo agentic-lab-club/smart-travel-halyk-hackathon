@@ -139,7 +139,7 @@ Frontend/mobile should treat this as the main screen contract for the trip dashb
 ## MVP Notes
 
 - state is currently stored in-memory for the prototype
-- supported mock destinations: `Kazakhstan`, `Japan`, `Turkey`, `UAE`
+- supported mock destinations: `Kazakhstan`, `Japan`, `Germany`
 - external providers are mock-based
 - Halyk values such as `cashback`, `bonus`, and `halyk_offer` are mock logic
 - if the Python `agent` is unavailable or returns invalid data, backend falls back to its local planner
@@ -157,3 +157,75 @@ To regenerate OpenAPI artifacts:
 ```powershell
 make swagger-backend
 ```
+
+## Manual Test Flow
+
+Recommended Swagger/UI order for a full manual check:
+
+1. `POST /api/v1/trips`
+Use a natural-language title like:
+`Family trip to Japan in July with budget 900000 from Almaty and Kazakhstan passport`
+
+2. Copy `trip.id` from the response.
+
+3. `GET /api/v1/trips/{tripId}`
+Confirm the draft already contains normalized fields like:
+- `destination_country`
+- `destination_city`
+- `budget`
+- `trip_purpose`
+
+4. `POST /api/v1/trips/{tripId}/chat/messages`
+Use follow-up prompts such as:
+- `Add event interest and suggest family-friendly places`
+- `We want a cheaper hotel near the center`
+
+5. `GET /api/v1/trips/{tripId}/chat/messages`
+Verify chat history and `missing_fields`.
+
+6. `POST /api/v1/trips/{tripId}/confirm`
+This generates the dashboard-ready master plan.
+
+7. `GET /api/v1/trips/{tripId}`
+Verify:
+- `selected_transport`
+- `selected_hotel`
+- `activities`
+- `budget`
+- `visa`
+- `review_summaries`
+
+8. `GET /api/v1/trips/{tripId}/options/transport`
+Copy one alternative `option.id`.
+
+9. `POST /api/v1/trips/{tripId}/options/transport/{optionId}/select`
+Verify totals update in the returned dashboard.
+
+10. `GET /api/v1/trips/{tripId}/options/hotels`
+Copy one alternative `option.id`.
+
+11. `POST /api/v1/trips/{tripId}/options/hotels/{optionId}/select`
+Verify totals update again.
+
+12. `POST /api/v1/trips/{tripId}/activities`
+Use a payload like:
+```json
+{
+  "kind": "event",
+  "title": "Kino.kz Anime Event Pick",
+  "location": "Tokyo",
+  "day_label": "Day 3",
+  "price": 21000,
+  "source_name": "Kino.kz",
+  "source_link": "https://kino.kz",
+  "description": "Manual event insertion from the selection screen"
+}
+```
+
+13. Read-model checks:
+- `GET /api/v1/trips/{tripId}/budget`
+- `GET /api/v1/trips/{tripId}/visa`
+- `GET /api/v1/trips/{tripId}/reviews`
+
+14. Optional regeneration:
+- `POST /api/v1/trips/{tripId}/regenerate`
