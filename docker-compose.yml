@@ -2,26 +2,13 @@ networks:
   smart-travel-halyk-network:
     driver: bridge
 
-services:
-  analytics_db:
-    image: postgres:16-alpine
-    container_name: analytics_db
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER:-analytics}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-analytics_pass}
-      POSTGRES_DB: ${POSTGRES_DB:-analytics_db}
-    ports:
-      - "${POSTGRES_PORT:-5432}:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
+volumes:
+  postgres_data:
+  minio_data:
+  go-mod-cache:
+  go-build-cache:
 
+services:
   # ai agent chat service python/fastapi
   agent:
     build:
@@ -33,12 +20,8 @@ services:
       - "8000:8000"
     environment:
       - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
-      - DATABASE_URL=postgresql://analytics:analytics_pass@analytics_db:5432/analytics_db
     env_file:
       - .env
-    depends_on:
-      analytics_db:
-        condition: service_healthy
     volumes:
       - ./agent:/app
     command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
@@ -75,6 +58,8 @@ services:
       context: ./backend
       dockerfile: Dockerfile
       target: runner
+      args:
+        GEN_SWAGGER: "0"
     container_name: smarttravel_backend
     env_file:
       - .env
@@ -87,7 +72,7 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      aiagent:
+      agent:
         condition: service_started
       minio-init:
         condition: service_completed_successfully
