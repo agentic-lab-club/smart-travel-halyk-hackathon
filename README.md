@@ -5,6 +5,8 @@
 
 ## Structure (обьеснение структуры папок)
 
+> for important files/folders References descriptions check the [REFERENCES.md](REFERENCES.md)
+
 ## Наш выбранный Кейс
 
 СТУДЕНЧЕСКИЙ ХАКАТОН — ДЕТАЛИ КЕЙСА:
