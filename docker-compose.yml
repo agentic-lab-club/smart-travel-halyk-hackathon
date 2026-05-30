@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   analytics_db:
     image: postgres:16-alpine
@@ -19,6 +17,24 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+
+  agent:
+    build: ./agent
+    container_name: agent
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
+      - DATABASE_URL=postgresql://analytics:analytics_pass@analytics_db:5432/analytics_db
+    env_file:
+      - .env
+    depends_on:
+      analytics_db:
+        condition: service_healthy
+    volumes:
+      - ./agent:/app
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 
 volumes:
   postgres_data:
