@@ -35,7 +35,7 @@ private struct RecommendationFeedPage: View {
             } else {
                 ForEach(recommendations) { recommendation in
                     NavigationLink {
-                        TripEntryPreviewView(recommendation: recommendation)
+                        SelectedTripView(trip: MockTravelData.tripDetails)
                     } label: {
                         RecommendationCard(recommendation: recommendation)
                             .contentShape(RoundedRectangle(cornerRadius: 16, style: .continuous))

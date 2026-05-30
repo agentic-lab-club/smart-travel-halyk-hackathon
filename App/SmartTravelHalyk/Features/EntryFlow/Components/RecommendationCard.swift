@@ -19,7 +19,7 @@ struct RecommendationCard: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(16)
             .background {
-                VariableBlurView(maxBlurRadius: 20, direction: .blurredTopClearBottom)
+                VariableBlurView(maxBlurRadius: 10, direction: .blurredTopClearBottom)
             }
 
             Spacer()
@@ -49,6 +49,9 @@ struct RecommendationCard: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(16)
+            .background {
+                VariableBlurView(maxBlurRadius: 4, direction: .blurredBottomClearTop)
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .frame(height: 450)

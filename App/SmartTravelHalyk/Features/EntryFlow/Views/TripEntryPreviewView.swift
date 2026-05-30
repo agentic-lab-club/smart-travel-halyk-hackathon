@@ -18,7 +18,7 @@ struct TripEntryPreviewView: View {
                     PriceBlock(title: "Estimated", value: recommendation.estimatedTotalCost.displayString)
                     PriceBlock(title: "Duration", value: "\(recommendation.durationDays) days")
                 }
-
+ 
                 SectionHeader(
                     title: "Next screen",
                     subtitle: "This card is ready to open the segmented timeline and smart map flow."
