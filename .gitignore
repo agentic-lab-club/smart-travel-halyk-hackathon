@@ -150,3 +150,12 @@ service-account*.json
 *.tar
 *.tar.gz
 *.rar
+/docs/ai-sessions
+
+.vscode
+__pycache__
+venv
+
+.env
+analytics.session.sql
+

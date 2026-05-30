@@ -1,0 +1,150 @@
+networks:
+  smart-travel-halyk-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  minio_data:
+  go-mod-cache:
+  go-build-cache:
+
+services:
+  # ai agent chat service python/fastapi
+  agent:
+    build:
+      context: ./agent
+      dockerfile: Dockerfile
+    container_name: smarttravel_agent
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@postgres:5432/${DB_DATABASE}
+    env_file:
+      - .env
+    volumes:
+      - ./agent:/app
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - smart-travel-halyk-network
+
+
+  # mobile frontend on Swift (/App)
+  postgres:
+    image: postgres:16-alpine
+    container_name: smarttravel_postgres
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      POSTGRES_DB: ${DB_DATABASE}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_DATABASE}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks:
+      - smart-travel-halyk-network
+
+  # backend golang main fiber
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: runner
+      args:
+        GEN_SWAGGER: "0"
+    container_name: smarttravel_backend
+    env_file:
+      - .env
+    ports:
+      - "${BACKEND_HOST_PORT:-8080}:8080"
+    restart: unless-stopped
+    command: ["-config=prod"]
+    volumes:
+      - ./backend/config:/app/config:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      agent:
+        condition: service_started
+      minio-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/health >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+    networks:
+      - smart-travel-halyk-network
+
+  # for Running Backend Tests:
+  # docker compose run --rm --no-deps backend-test go test ./internal/healthcheck
+  backend-test:
+    profiles: ["test"]
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: test
+    working_dir: /src
+    env_file:
+      - .env
+    volumes:
+      - .:/src
+      - go-mod-cache:/go/pkg/mod
+      - go-build-cache:/root/.cache/go-build
+    command: ["sh"]
+    networks:
+      - smart-travel-halyk-network
+
+  # s3 minio storage bucket
+  minio:
+    image: quay.io/minio/minio:RELEASE.2025-02-28T09-55-16Z
+    container_name: smarttravel_s3_minio
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: ${STORAGE_ACCESS_KEY}
+      MINIO_ROOT_PASSWORD: ${STORAGE_SECRET_KEY}
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
+    ports:
+      - "${MINIO_API_HOST_PORT:-9100}:9000"
+      - "${MINIO_CONSOLE_HOST_PORT:-9101}:9001"
+    networks:
+      - smart-travel-halyk-network
+
+  # create/configure s3 minio bucket for local dev
+  minio-init:
+    image: quay.io/minio/mc:RELEASE.2025-02-21T16-00-46Z
+    container_name: smarttravel_s3_minio_init
+    depends_on:
+      - minio
+    restart: "no"
+    volumes:
+      - ./mock-assets:/seed-assets:ro
+    entrypoint: >
+      /bin/sh -ec "
+      until /usr/bin/mc alias set local http://minio:9000 ${STORAGE_ACCESS_KEY} ${STORAGE_SECRET_KEY}; do
+        echo 'waiting for minio...';
+        sleep 2;
+      done;
+      /usr/bin/mc mb --ignore-existing local/${STORAGE_BUCKET:-application-files};
+      /usr/bin/mc anonymous set private local/${STORAGE_BUCKET:-application-files};
+      if [ -d /seed-assets ] && [ \"$(ls -A /seed-assets 2>/dev/null)\" ]; then
+        /usr/bin/mc cp --recursive /seed-assets local/${STORAGE_BUCKET:-application-files}/;
+      fi;
+      "
+    networks:
+      - smart-travel-halyk-network

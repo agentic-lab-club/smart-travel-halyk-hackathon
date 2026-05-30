@@ -1,0 +1,1042 @@
+basePath: /
+definitions:
+  healthcheck.CheckResult:
+    properties:
+      latency:
+        type: string
+      message:
+        type: string
+      status:
+        type: string
+    type: object
+  healthcheck.HealthCheckResponse:
+    properties:
+      checks:
+        additionalProperties:
+          $ref: '#/definitions/healthcheck.CheckResult'
+        type: object
+      status:
+        type: string
+      timestamp:
+        type: string
+    type: object
+  healthcheck.LivenessResponse:
+    properties:
+      status:
+        type: string
+    type: object
+  healthcheck.ReadinessResponse:
+    properties:
+      status:
+        type: string
+    type: object
+  trip.ActivityItem:
+    properties:
+      currency:
+        type: string
+      day_label:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      kind:
+        type: string
+      location:
+        type: string
+      manually_added:
+        type: boolean
+      price:
+        type: integer
+      source_link:
+        type: string
+      source_name:
+        type: string
+      title:
+        type: string
+    type: object
+  trip.BudgetSummary:
+    properties:
+      bonus_amount:
+        type: integer
+      cashback_amount:
+        type: integer
+      currency:
+        type: string
+      estimated_food_total:
+        type: integer
+      estimated_local_transport_total:
+        type: integer
+      events_total:
+        type: integer
+      grand_total:
+        type: integer
+      halyk_offer_label:
+        type: string
+      hotel_total:
+        type: integer
+      insurance_estimate:
+        type: integer
+      transport_total:
+        type: integer
+    type: object
+  trip.ChatMessage:
+    properties:
+      action:
+        type: string
+      content:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: string
+      role:
+        type: string
+      structured:
+        additionalProperties:
+          type: any
+        type: object
+    type: object
+  trip.ChatMessageDTO:
+    properties:
+      action:
+        type: string
+      content:
+        minLength: 2
+        type: string
+    required:
+    - content
+    type: object
+  trip.ChatResponse:
+    properties:
+      assistant_hints:
+        items:
+          type: string
+        type: array
+      messages:
+        items:
+          $ref: '#/definitions/trip.ChatMessage'
+        type: array
+      missing_fields:
+        items:
+          type: string
+        type: array
+      session_id:
+        type: string
+    type: object
+  trip.CreateTripDTO:
+    properties:
+      title:
+        minLength: 3
+        type: string
+    required:
+    - title
+    type: object
+  trip.HotelOption:
+    properties:
+      currency:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      location:
+        type: string
+      name:
+        type: string
+      price:
+        type: integer
+      provider:
+        type: string
+      rating:
+        type: number
+      review_link:
+        type: string
+      selected:
+        type: boolean
+    type: object
+  trip.ManualActivityDTO:
+    properties:
+      day_label:
+        type: string
+      description:
+        type: string
+      kind:
+        type: string
+      location:
+        type: string
+      price:
+        type: integer
+      source_link:
+        type: string
+      source_name:
+        type: string
+      title:
+        type: string
+    required:
+    - day_label
+    - kind
+    - location
+    - title
+    type: object
+  trip.OfferSummary:
+    properties:
+      bonus_amount:
+        type: integer
+      cashback_amount:
+        type: integer
+      halyk_offer:
+        type: string
+      highlights:
+        items:
+          type: string
+        type: array
+    type: object
+  trip.PatchTripDTO:
+    properties:
+      budget:
+        type: integer
+      citizenship:
+        type: string
+      destination_city:
+        type: string
+      destination_country:
+        type: string
+      end_date:
+        type: string
+      event_interest:
+        type: boolean
+      hotel_preferences:
+        items:
+          type: string
+        type: array
+      insurance_needed:
+        type: boolean
+      interests:
+        items:
+          type: string
+        type: array
+      origin_city:
+        type: string
+      start_date:
+        type: string
+      transport_type:
+        type: string
+      travelers:
+        items:
+          $ref: '#/definitions/trip.TravelerInput'
+        type: array
+      trip_purpose:
+        type: string
+    type: object
+  trip.ReviewSummary:
+    properties:
+      id:
+        type: string
+      kind:
+        type: string
+      source_link:
+        type: string
+      source_name:
+        type: string
+      summary:
+        type: string
+      target_name:
+        type: string
+    type: object
+  trip.TodoItem:
+    properties:
+      day_label:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      kind:
+        type: string
+      link:
+        type: string
+      price:
+        type: integer
+      status:
+        type: string
+      title:
+        type: string
+    type: object
+  trip.TodoSection:
+    properties:
+      id:
+        type: string
+      items:
+        items:
+          $ref: '#/definitions/trip.TodoItem'
+        type: array
+      title:
+        type: string
+    type: object
+  trip.TransportOption:
+    properties:
+      arrival:
+        type: string
+      currency:
+        type: string
+      departure:
+        type: string
+      description:
+        type: string
+      destination:
+        type: string
+      id:
+        type: string
+      mode:
+        type: string
+      origin:
+        type: string
+      price:
+        type: integer
+      provider:
+        type: string
+      selected:
+        type: boolean
+      title:
+        type: string
+    type: object
+  trip.Traveler:
+    properties:
+      age_group:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      notes:
+        type: string
+      preferences:
+        items:
+          type: string
+        type: array
+      type:
+        type: string
+    type: object
+  trip.TravelerInput:
+    properties:
+      age_group:
+        type: string
+      name:
+        type: string
+      notes:
+        type: string
+      preferences:
+        items:
+          type: string
+        type: array
+      type:
+        type: string
+    required:
+    - age_group
+    - type
+    type: object
+  trip.Trip:
+    properties:
+      activities:
+        items:
+          $ref: '#/definitions/trip.ActivityItem'
+        type: array
+      budget:
+        $ref: '#/definitions/trip.BudgetSummary'
+      chat_session_id:
+        type: string
+      citizenship:
+        type: string
+      created_at:
+        type: string
+      destination_city:
+        type: string
+      destination_country:
+        type: string
+      end_date:
+        type: string
+      event_interest:
+        type: boolean
+      hotel_options:
+        items:
+          $ref: '#/definitions/trip.HotelOption'
+        type: array
+      hotel_preferences:
+        items:
+          type: string
+        type: array
+      id:
+        type: string
+      insurance_needed:
+        type: boolean
+      interests:
+        items:
+          type: string
+        type: array
+      offers:
+        $ref: '#/definitions/trip.OfferSummary'
+      origin_city:
+        type: string
+      review_summaries:
+        items:
+          $ref: '#/definitions/trip.ReviewSummary'
+        type: array
+      selected_hotel:
+        $ref: '#/definitions/trip.HotelOption'
+      selected_transport:
+        $ref: '#/definitions/trip.TransportOption'
+      start_date:
+        type: string
+      status:
+        type: string
+      title:
+        type: string
+      todo_sections:
+        items:
+          $ref: '#/definitions/trip.TodoSection'
+        type: array
+      transport_options:
+        items:
+          $ref: '#/definitions/trip.TransportOption'
+        type: array
+      transport_type:
+        type: string
+      travelers:
+        items:
+          $ref: '#/definitions/trip.Traveler'
+        type: array
+      trip_purpose:
+        type: string
+      updated_at:
+        type: string
+      vibe_labels:
+        items:
+          type: string
+        type: array
+      visa:
+        $ref: '#/definitions/trip.VisaInfo'
+    type: object
+  trip.TripDetailsResponse:
+    properties:
+      activities:
+        items:
+          $ref: '#/definitions/trip.ActivityItem'
+        type: array
+      budget:
+        $ref: '#/definitions/trip.BudgetSummary'
+      chat_entrypoints:
+        items:
+          type: string
+        type: array
+      offers:
+        $ref: '#/definitions/trip.OfferSummary'
+      review_summaries:
+        items:
+          $ref: '#/definitions/trip.ReviewSummary'
+        type: array
+      selected_hotel:
+        $ref: '#/definitions/trip.HotelOption'
+      selected_transport:
+        $ref: '#/definitions/trip.TransportOption'
+      todo_sections:
+        items:
+          $ref: '#/definitions/trip.TodoSection'
+        type: array
+      travelers:
+        items:
+          $ref: '#/definitions/trip.Traveler'
+        type: array
+      trip:
+        $ref: '#/definitions/trip.Trip'
+      visa:
+        $ref: '#/definitions/trip.VisaInfo'
+    type: object
+  trip.VisaInfo:
+    properties:
+      checklist:
+        items:
+          type: string
+        type: array
+      country:
+        type: string
+      notes:
+        type: string
+      recommended_lead:
+        type: string
+      requirement:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@yourdomain.com
+    name: API Support
+    url: http://yourdomain.com/support
+  description: 'JWT Token as Bearer: Authorization: Bearer {token}'
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: https://yourdomain.com/terms/
+  title: Smart Travel Halyk Backend API
+  version: "1.0"
+paths:
+  /api/v1/healthcheck:
+    get:
+      description: Returns the application health status and dependency checks.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/healthcheck.HealthCheckResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "503":
+          description: Service Unavailable
+          schema:
+            $ref: '#/definitions/healthcheck.HealthCheckResponse'
+      summary: Health check
+      tags:
+      - '@healthcheck'
+  /api/v1/healthcheck/liveness:
+    get:
+      description: Returns whether the process is alive.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/healthcheck.LivenessResponse'
+      summary: Liveness probe
+      tags:
+      - '@healthcheck'
+  /api/v1/healthcheck/readiness:
+    get:
+      description: Returns whether the service is ready to serve traffic.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/healthcheck.ReadinessResponse'
+        "503":
+          description: Service Unavailable
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Readiness probe
+      tags:
+      - '@healthcheck'
+  /api/v1/trips:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new trip draft and initializes chat session state.
+      parameters:
+      - description: Trip draft payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/trip.CreateTripDTO'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/trip.TripDetailsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Create trip draft
+      tags:
+      - '@trip'
+  /api/v1/trips/{tripId}:
+    get:
+      description: Returns the aggregate trip response for dashboard rendering.
+      parameters:
+      - description: Trip ID
+        in: path
+        name: tripId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/trip.TripDetailsResponse'
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Get trip details
+      tags:
+      - '@trip'
+    patch:
+      consumes:
+      - application/json
+      description: Updates trip-level fields collected before confirmation and generation.
+      parameters:
+      - description: Trip ID
+        in: path
+        name: tripId
+        required: true
+        type: string
+      - description: Trip patch payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/trip.PatchTripDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/trip.TripDetailsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Update trip draft fields
+      tags:
+      - '@trip'
+  /api/v1/trips/{tripId}/activities:
+    post:
+      consumes:
+      - application/json
+      description: Adds a place or event item to the trip and updates dashboard state.
+      parameters:
+      - description: Trip ID
+        in: path
+        name: tripId
+        required: true
+        type: string
+      - description: Manual activity payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/trip.ManualActivityDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/trip.TripDetailsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Add activity manually
+      tags:
+      - '@trip'
+  /api/v1/trips/{tripId}/budget:
+    get:
+      description: Returns aggregate trip costs, cashback, bonus, and offer fields.
+      parameters:
+      - description: Trip ID
+        in: path
+        name: tripId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/trip.BudgetSummary'
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Get budget summary
+      tags:
+      - '@trip'
+  /api/v1/trips/{tripId}/chat/messages:
+    get:
+      description: Returns the current chat history attached to a trip planning session.
+      parameters:
+      - description: Trip ID
+        in: path
+        name: tripId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/trip.ChatResponse'
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Get trip chat history
+      tags:
+      - '@trip'
+    post:
+      consumes:
+      - application/json
+      description: Adds a user message to the trip planning session and returns AI
+        chat output.
+      parameters:
+      - description: Trip ID
+        in: path
+        name: tripId
+        required: true
+        type: string
+      - description: Chat message payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/trip.ChatMessageDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/trip.ChatResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Send planning chat message
+      tags:
+      - '@trip'
+  /api/v1/trips/{tripId}/confirm:
+    post:
+      description: Confirms collected fields and generates the master-plan dashboard
+        response.
+      parameters:
+      - description: Trip ID
+        in: path
+        name: tripId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/trip.TripDetailsResponse'
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Confirm trip and generate plan
+      tags:
+      - '@trip'
+  /api/v1/trips/{tripId}/options/hotels:
+    get:
+      description: Returns selected and alternative hotel options for a trip.
+      parameters:
+      - description: Trip ID
+        in: path
+        name: tripId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/trip.HotelOption'
+            type: array
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Get hotel options
+      tags:
+      - '@trip'
+  /api/v1/trips/{tripId}/options/hotels/{optionId}/select:
+    post:
+      description: Replaces the currently selected hotel option and recalculates budget.
+      parameters:
+      - description: Trip ID
+        in: path
+        name: tripId
+        required: true
+        type: string
+      - description: Hotel option ID
+        in: path
+        name: optionId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/trip.TripDetailsResponse'
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Select hotel option
+      tags:
+      - '@trip'
+  /api/v1/trips/{tripId}/options/transport:
+    get:
+      description: Returns selected and alternative transport options for a trip.
+      parameters:
+      - description: Trip ID
+        in: path
+        name: tripId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/trip.TransportOption'
+            type: array
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Get transport options
+      tags:
+      - '@trip'
+  /api/v1/trips/{tripId}/options/transport/{optionId}/select:
+    post:
+      description: Replaces the currently selected transport option and recalculates
+        budget.
+      parameters:
+      - description: Trip ID
+        in: path
+        name: tripId
+        required: true
+        type: string
+      - description: Transport option ID
+        in: path
+        name: optionId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/trip.TripDetailsResponse'
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Select transport option
+      tags:
+      - '@trip'
+  /api/v1/trips/{tripId}/regenerate:
+    post:
+      description: Regenerates trip details from current stored state and chat context.
+      parameters:
+      - description: Trip ID
+        in: path
+        name: tripId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/trip.TripDetailsResponse'
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Regenerate trip plan
+      tags:
+      - '@trip'
+  /api/v1/trips/{tripId}/reviews:
+    get:
+      description: Returns AI-produced review summaries and source links for hotels,
+        places, and events.
+      parameters:
+      - description: Trip ID
+        in: path
+        name: tripId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/trip.ReviewSummary'
+            type: array
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Get review summaries
+      tags:
+      - '@trip'
+  /api/v1/trips/{tripId}/visa:
+    get:
+      description: Returns visa assistant information for the selected destination.
+      parameters:
+      - description: Trip ID
+        in: path
+        name: tripId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/trip.VisaInfo'
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Get visa info
+      tags:
+      - '@trip'
+schemes:
+- http
+- https
+securityDefinitions:
+  BearerToken:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

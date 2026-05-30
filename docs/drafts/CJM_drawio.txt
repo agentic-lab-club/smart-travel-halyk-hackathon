@@ -1,0 +1,130 @@
+<mxfile host="app.diagrams.net">
+  <diagram name="Страница-1" id="b_0v5KbB5PnlkkIXpf2O">
+    <mxGraphModel dx="2538" dy="1314" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="0kaY22dUv5ZgKypV_Yjv-1" parent="1" style="whiteSpace=wrap;strokeWidth=2;fillColor=light-dark(#eeeeee,#1f2020);strokeColor=light-dark(#999999,#cccccc);fontColor=light-dark(#333333,#cccccc);" value="Пользователь заходит в Halyk Travel" vertex="1">
+          <mxGeometry height="78" width="260" x="175" y="410" as="geometry" />
+        </mxCell>
+        <mxCell id="0kaY22dUv5ZgKypV_Yjv-2" parent="1" style="whiteSpace=wrap;strokeWidth=2;fillColor=light-dark(#eeeeee,#1f2020);strokeColor=light-dark(#999999,#cccccc);fontColor=light-dark(#333333,#cccccc);" value="Выбор сценария поездки" vertex="1">
+          <mxGeometry height="54" width="245" x="182" y="538" as="geometry" />
+        </mxCell>
+        <mxCell id="0kaY22dUv5ZgKypV_Yjv-3" parent="1" style="whiteSpace=wrap;strokeWidth=2;fillColor=light-dark(#eeeeee,#1f2020);strokeColor=light-dark(#999999,#cccccc);fontColor=light-dark(#333333,#cccccc);" value="Поиск доступных вариантов" vertex="1">
+          <mxGeometry height="78" width="260" x="175" y="770" as="geometry" />
+        </mxCell>
+        <mxCell id="0kaY22dUv5ZgKypV_Yjv-4" parent="1" style="whiteSpace=wrap;strokeWidth=2;fillColor=light-dark(#eeeeee,#1f2020);strokeColor=light-dark(#999999,#cccccc);fontColor=light-dark(#333333,#cccccc);" value="AI собирает Personal Travel Plan" vertex="1">
+          <mxGeometry height="78" width="260" x="175" y="898" as="geometry" />
+        </mxCell>
+        <mxCell id="0kaY22dUv5ZgKypV_Yjv-5" parent="1" style="whiteSpace=wrap;strokeWidth=2;fillColor=light-dark(#eeeeee,#1f2020);strokeColor=light-dark(#999999,#cccccc);fontColor=light-dark(#333333,#cccccc);" value="Halyk предлагает bundle-пакет" vertex="1">
+          <mxGeometry height="78" width="260" x="175" y="1026" as="geometry" />
+        </mxCell>
+        <mxCell id="0kaY22dUv5ZgKypV_Yjv-6" parent="1" style="whiteSpace=wrap;strokeWidth=2;fillColor=light-dark(#eeeeee,#1f2020);strokeColor=light-dark(#999999,#cccccc);fontColor=light-dark(#333333,#cccccc);" value="AI Event Planner" vertex="1">
+          <mxGeometry height="54" width="178" x="216" y="1154" as="geometry" />
+        </mxCell>
+        <mxCell id="0kaY22dUv5ZgKypV_Yjv-7" parent="1" style="whiteSpace=wrap;strokeWidth=2;fillColor=light-dark(#eeeeee,#1f2020);strokeColor=light-dark(#999999,#cccccc);fontColor=light-dark(#333333,#cccccc);" value="Trust layer" vertex="1">
+          <mxGeometry height="54" width="136" x="237" y="1258" as="geometry" />
+        </mxCell>
+        <mxCell id="0kaY22dUv5ZgKypV_Yjv-8" parent="1" style="whiteSpace=wrap;strokeWidth=2;fillColor=light-dark(#eeeeee,#1f2020);strokeColor=light-dark(#999999,#cccccc);fontColor=light-dark(#333333,#cccccc);" value="Пользователь оплачивает всё внутри Halyk" vertex="1">
+          <mxGeometry height="78" width="260" x="175" y="1362" as="geometry" />
+        </mxCell>
+        <mxCell id="0kaY22dUv5ZgKypV_Yjv-9" parent="1" style="whiteSpace=wrap;strokeWidth=2;fillColor=light-dark(#eeeeee,#1f2020);strokeColor=light-dark(#999999,#cccccc);fontColor=light-dark(#333333,#cccccc);" value="Trip Dashboard" vertex="1">
+          <mxGeometry height="54" width="167" x="222" y="1490" as="geometry" />
+        </mxCell>
+        <mxCell id="0kaY22dUv5ZgKypV_Yjv-10" parent="1" style="whiteSpace=wrap;strokeWidth=2;fillColor=light-dark(#eeeeee,#1f2020);strokeColor=light-dark(#999999,#cccccc);fontColor=light-dark(#333333,#cccccc);" value="Пользователь оставляет отзыв" vertex="1">
+          <mxGeometry height="78" width="260" x="175" y="1594" as="geometry" />
+        </mxCell>
+        <mxCell id="0kaY22dUv5ZgKypV_Yjv-11" parent="1" style="whiteSpace=wrap;strokeWidth=2;fillColor=light-dark(#eeeeee,#1f2020);strokeColor=light-dark(#999999,#cccccc);fontColor=light-dark(#333333,#cccccc);" value="AI улучшает профиль пользователя" vertex="1">
+          <mxGeometry height="78" width="260" x="175" y="1722" as="geometry" />
+        </mxCell>
+        <mxCell id="0kaY22dUv5ZgKypV_Yjv-12" parent="1" style="whiteSpace=wrap;strokeWidth=2;fillColor=light-dark(#eeeeee,#1f2020);strokeColor=light-dark(#999999,#cccccc);fontColor=light-dark(#333333,#cccccc);" value="Halyk предлагает следующую поездку" vertex="1">
+          <mxGeometry height="78" width="260" x="175" y="1850" as="geometry" />
+        </mxCell>
+        <mxCell id="0kaY22dUv5ZgKypV_Yjv-13" parent="1" style="whiteSpace=wrap;strokeWidth=2;fillColor=light-dark(#eeeeee,#1f2020);strokeColor=light-dark(#999999,#cccccc);fontColor=light-dark(#333333,#cccccc);" value="Пользователь указывает параметры" vertex="1">
+          <mxGeometry height="78" width="260" x="20" y="642" as="geometry" />
+        </mxCell>
+        <mxCell id="0kaY22dUv5ZgKypV_Yjv-14" parent="1" style="whiteSpace=wrap;strokeWidth=2;fillColor=light-dark(#eeeeee,#1f2020);strokeColor=light-dark(#999999,#cccccc);fontColor=light-dark(#333333,#cccccc);" value="AI строит профиль на основе данных" vertex="1">
+          <mxGeometry height="78" width="260" x="330" y="642" as="geometry" />
+        </mxCell>
+        <mxCell id="0kaY22dUv5ZgKypV_Yjv-15" edge="1" parent="1" source="0kaY22dUv5ZgKypV_Yjv-1" style="curved=1;startArrow=none;endArrow=block;exitX=0.5;exitY=1;entryX=0.5;entryY=0;rounded=0;" target="0kaY22dUv5ZgKypV_Yjv-2" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="0kaY22dUv5ZgKypV_Yjv-16" edge="1" parent="1" source="0kaY22dUv5ZgKypV_Yjv-2" style="curved=1;startArrow=none;endArrow=block;exitX=0.17;exitY=1;entryX=0.5;entryY=0;rounded=0;" target="0kaY22dUv5ZgKypV_Yjv-13" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="150" y="617" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="0kaY22dUv5ZgKypV_Yjv-17" edge="1" parent="1" source="0kaY22dUv5ZgKypV_Yjv-2" style="curved=1;startArrow=none;endArrow=block;exitX=0.83;exitY=1;entryX=0.5;entryY=0;rounded=0;" target="0kaY22dUv5ZgKypV_Yjv-14" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="460" y="617" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="0kaY22dUv5ZgKypV_Yjv-18" edge="1" parent="1" source="0kaY22dUv5ZgKypV_Yjv-13" style="curved=1;startArrow=none;endArrow=block;exitX=0.5;exitY=1;entryX=0.14;entryY=0;rounded=0;" target="0kaY22dUv5ZgKypV_Yjv-3" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="150" y="745" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="0kaY22dUv5ZgKypV_Yjv-19" edge="1" parent="1" source="0kaY22dUv5ZgKypV_Yjv-14" style="curved=1;startArrow=none;endArrow=block;exitX=0.5;exitY=1;entryX=0.86;entryY=0;rounded=0;" target="0kaY22dUv5ZgKypV_Yjv-3" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="460" y="745" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="0kaY22dUv5ZgKypV_Yjv-20" edge="1" parent="1" source="0kaY22dUv5ZgKypV_Yjv-3" style="curved=1;startArrow=none;endArrow=block;exitX=0.5;exitY=1;entryX=0.5;entryY=0;rounded=0;" target="0kaY22dUv5ZgKypV_Yjv-4" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="0kaY22dUv5ZgKypV_Yjv-21" edge="1" parent="1" source="0kaY22dUv5ZgKypV_Yjv-4" style="curved=1;startArrow=none;endArrow=block;exitX=0.5;exitY=1;entryX=0.5;entryY=0;rounded=0;" target="0kaY22dUv5ZgKypV_Yjv-5" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="0kaY22dUv5ZgKypV_Yjv-22" edge="1" parent="1" source="0kaY22dUv5ZgKypV_Yjv-5" style="curved=1;startArrow=none;endArrow=block;exitX=0.5;exitY=1;entryX=0.5;entryY=0;rounded=0;" target="0kaY22dUv5ZgKypV_Yjv-6" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="0kaY22dUv5ZgKypV_Yjv-23" edge="1" parent="1" source="0kaY22dUv5ZgKypV_Yjv-6" style="curved=1;startArrow=none;endArrow=block;exitX=0.5;exitY=1;entryX=0.5;entryY=0;rounded=0;" target="0kaY22dUv5ZgKypV_Yjv-7" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="0kaY22dUv5ZgKypV_Yjv-24" edge="1" parent="1" source="0kaY22dUv5ZgKypV_Yjv-7" style="curved=1;startArrow=none;endArrow=block;exitX=0.5;exitY=1;entryX=0.5;entryY=0;rounded=0;" target="0kaY22dUv5ZgKypV_Yjv-8" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="0kaY22dUv5ZgKypV_Yjv-25" edge="1" parent="1" source="0kaY22dUv5ZgKypV_Yjv-8" style="curved=1;startArrow=none;endArrow=block;exitX=0.5;exitY=1;entryX=0.5;entryY=0;rounded=0;" target="0kaY22dUv5ZgKypV_Yjv-9" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="0kaY22dUv5ZgKypV_Yjv-26" edge="1" parent="1" source="0kaY22dUv5ZgKypV_Yjv-9" style="curved=1;startArrow=none;endArrow=block;exitX=0.5;exitY=1;entryX=0.5;entryY=0;rounded=0;" target="0kaY22dUv5ZgKypV_Yjv-10" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="0kaY22dUv5ZgKypV_Yjv-27" edge="1" parent="1" source="0kaY22dUv5ZgKypV_Yjv-10" style="curved=1;startArrow=none;endArrow=block;exitX=0.5;exitY=1;entryX=0.5;entryY=0;rounded=0;" target="0kaY22dUv5ZgKypV_Yjv-11" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="0kaY22dUv5ZgKypV_Yjv-28" edge="1" parent="1" source="0kaY22dUv5ZgKypV_Yjv-11" style="curved=1;startArrow=none;endArrow=block;exitX=0.5;exitY=1;entryX=0.5;entryY=0;rounded=0;" target="0kaY22dUv5ZgKypV_Yjv-12" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
