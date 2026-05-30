@@ -1,4 +1,7 @@
 /docs/ai-sessions
 
+.vscode
+__pycache__
+
 .env
 analytics.session.sql
