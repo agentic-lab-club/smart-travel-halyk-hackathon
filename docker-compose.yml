@@ -20,18 +20,22 @@ services:
       - "8000:8000"
     environment:
       - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@postgres:5432/${DB_DATABASE}
     env_file:
       - .env
     volumes:
       - ./agent:/app
     command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    depends_on:
+      postgres:
+        condition: service_healthy
     networks:
       - smart-travel-halyk-network
 
 
   # mobile frontend on Swift (/App)
   postgres:
-    image: postgres:17-alpine
+    image: postgres:16-alpine
     container_name: smarttravel_postgres
     ports:
       - "5432:5432"
@@ -116,8 +120,8 @@ services:
     volumes:
       - minio_data:/data
     ports:
-      - "9000:9000"
-      - "9002:9001"
+      - "${MINIO_API_HOST_PORT:-9100}:9000"
+      - "${MINIO_CONSOLE_HOST_PORT:-9101}:9001"
     networks:
       - smart-travel-halyk-network
 

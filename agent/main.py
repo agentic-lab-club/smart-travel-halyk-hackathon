@@ -1,9 +1,10 @@
 """FastAPI service for travel parsing and place Q&A via DeepSeek LLM."""
 import json
 import os
-import sqlite3
+from datetime import date, datetime
 from decimal import Decimal
 from typing import Any, Optional
+from uuid import UUID
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
@@ -20,10 +21,6 @@ client = OpenAI(api_key=DEEPSEEK_API_KEY, base_url="https://api.deepseek.com")
 
 app = FastAPI(title="SmartTravel Halyk — Travel Agent")
 
-AGENT_MEMORY_DB_PATH = os.getenv(
-    "AGENT_MEMORY_DB_PATH",
-    os.path.join(os.path.dirname(__file__), "agent_memory.sqlite3"),
-)
 AGENT_MEMORY_LIMIT = 5
 
 # ---------------------------------------------------------------------------
@@ -115,10 +112,10 @@ class AgentRequest(BaseModel):
         validation_alias=AliasChoices("user_id", "userId"),
         description="Application user id",
     )
-    session_id: Optional[str] = Field(
-        default=None,
+    session_id: str = Field(
+        ...,
         validation_alias=AliasChoices("session_id", "sessionId"),
-        description="Optional chat/session id. Defaults to 'default' per user.",
+        description="Go chat/session id UUID",
     )
     language: Optional[str] = Field(
         default=None,
@@ -126,7 +123,7 @@ class AgentRequest(BaseModel):
         description="Preferred answer language, e.g. ru, kk, en",
     )
 
-    @field_validator("input_text", "session_id", "language")
+    @field_validator("input_text", "language")
     @classmethod
     def normalize_text_fields(cls, v: Optional[str]) -> Optional[str]:
         if v is None:
@@ -142,6 +139,18 @@ class AgentRequest(BaseModel):
         if not v:
             raise ValueError("input_text is required")
         return v
+
+    @field_validator("session_id")
+    @classmethod
+    def validate_session_id(cls, v: str) -> str:
+        v_clean = v.strip()
+        if not v_clean:
+            raise ValueError("session_id is required")
+        try:
+            UUID(v_clean)
+        except ValueError as exc:
+            raise ValueError("session_id must be a UUID") from exc
+        return v_clean
 
 
 class AgentParsedQuery(BaseModel):
@@ -228,6 +237,7 @@ Rules:
 
 AGENT_QUERY_EXTRACT_PROMPT = """You are a query planner for a travel database agent.
 The user writes one free-text message. Extract search fields for the database and return ONLY valid JSON.
+ANSWER_MEMORY may contain up to 5 latest previous answers from the same user session. Use it only to resolve follow-up references such as "там", "туда", "этот город", "that place", or "there". If the current user message names a place, city, or country, prefer the current message over memory.
 
 JSON fields:
 - "question": cleaned original question, string.
@@ -243,7 +253,7 @@ JSON fields:
 Rules:
 1. Return ONLY raw JSON. No markdown, no comments.
 2. Do not answer the user. Only extract fields.
-3. Do not invent a city/country/attraction if it is not present.
+3. Do not invent a city/country/attraction if it is not present in the current message or clearly implied by ANSWER_MEMORY.
 4. For general requests like "расскажи про Астану", set all include_* fields to true."""
 
 
@@ -268,7 +278,8 @@ Rules:
 4. Do not invent exact current ticket prices, opening hours, event schedules, or temporary closures. If the user asks for current details, say they should be checked before visiting.
 5. If the place is ambiguous, explain the likely interpretation and ask for city/country only if needed.
 6. Do not repeat ANSWER_MEMORY verbatim unless the user asks to summarize or continue previous answers.
-7. Keep the answer useful for a mobile app: clear paragraphs or short bullet points, no markdown tables."""
+7. For recommendations and selections, use ANSWER_MEMORY to keep continuity with previous places, restaurants, seasons, and user preferences in the same session.
+8. Keep the answer useful for a mobile app: clear paragraphs or short bullet points, no markdown tables."""
 
 
 def _call_deepseek(
@@ -301,103 +312,147 @@ def _sanitize_json(text: str) -> str:
     return text.strip()
 
 
-def _session_key(session_id: Optional[str]) -> str:
-    return session_id.strip() if session_id and session_id.strip() else "default"
+def _session_key(session_id: str) -> str:
+    return session_id.strip()
 
 
-def _get_memory_connection():
-    memory_dir = os.path.dirname(AGENT_MEMORY_DB_PATH)
-    if memory_dir:
-        os.makedirs(memory_dir, exist_ok=True)
+def _init_agent_memory_tables(cur) -> None:
+    cur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS agent_chat_sessions (
+            session_id UUID PRIMARY KEY,
+            user_id BIGINT NOT NULL,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        );
 
-    conn = sqlite3.connect(AGENT_MEMORY_DB_PATH)
-    conn.row_factory = sqlite3.Row
-    return conn
+        CREATE TABLE IF NOT EXISTS agent_chat_messages (
+            id BIGSERIAL PRIMARY KEY,
+            session_id UUID NOT NULL
+                REFERENCES agent_chat_sessions(session_id) ON DELETE CASCADE,
+            user_id BIGINT NOT NULL,
+            role VARCHAR(32) NOT NULL CHECK (role IN ('user', 'assistant')),
+            content TEXT NOT NULL,
+            input_text TEXT,
+            answer TEXT,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        );
 
+        CREATE INDEX IF NOT EXISTS idx_agent_chat_messages_session_user_created
+            ON agent_chat_messages(session_id, user_id, created_at DESC, id DESC);
 
-def _init_agent_memory_db() -> None:
-    with _get_memory_connection() as conn:
-        conn.execute(
-            """
-            CREATE TABLE IF NOT EXISTS agent_answer_memory (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id INTEGER NOT NULL,
-                session_id TEXT NOT NULL DEFAULT 'default',
-                input_text TEXT NOT NULL,
-                answer TEXT NOT NULL,
-                created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-            );
-            """
-        )
-        conn.execute(
-            """
-            CREATE INDEX IF NOT EXISTS idx_agent_answer_memory_user_session
-            ON agent_answer_memory(user_id, session_id, id DESC);
-            """
-        )
-
-
-def _sqlite_rows(rows) -> list[dict[str, Any]]:
-    return [dict(row) for row in rows]
+        CREATE INDEX IF NOT EXISTS idx_agent_chat_messages_assistant_memory
+            ON agent_chat_messages(user_id, session_id, role, id DESC);
+        """
+    )
 
 
-def _fetch_answer_memory(user_id: int, session_id: Optional[str]) -> list[dict[str, Any]]:
+def _fetch_answer_memory(user_id: int, session_id: str) -> list[dict[str, Any]]:
+    from db import get_connection
+    from psycopg2.extras import RealDictCursor
+
     session_key = _session_key(session_id)
-    _init_agent_memory_db()
+    conn = get_connection()
+    try:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            _init_agent_memory_tables(cur)
+            rows = _fetch_rows(
+                cur,
+                """
+                SELECT
+                    id,
+                    user_id,
+                    session_id::text AS session_id,
+                    input_text,
+                    answer,
+                    created_at
+                FROM agent_chat_messages
+                WHERE user_id = %(user_id)s
+                  AND session_id = %(session_id)s::uuid
+                  AND role = 'assistant'
+                ORDER BY id DESC
+                LIMIT %(limit)s;
+                """,
+                {
+                    "user_id": user_id,
+                    "session_id": session_key,
+                    "limit": AGENT_MEMORY_LIMIT,
+                },
+            )
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
 
-    with _get_memory_connection() as conn:
-        rows = conn.execute(
-            """
-            SELECT id, user_id, session_id, input_text, answer, created_at
-            FROM agent_answer_memory
-            WHERE user_id = ? AND session_id = ?
-            ORDER BY id DESC
-            LIMIT ?;
-            """,
-            (user_id, session_key, AGENT_MEMORY_LIMIT),
-        ).fetchall()
-
-    return list(reversed(_sqlite_rows(rows)))
+    return list(reversed(rows))
 
 
 def _save_answer_memory(
     user_id: int,
-    session_id: Optional[str],
+    session_id: str,
     input_text: str,
     answer: str,
 ) -> list[dict[str, Any]]:
-    session_key = _session_key(session_id)
-    _init_agent_memory_db()
+    from db import get_connection
 
-    with _get_memory_connection() as conn:
-        conn.execute(
-            """
-            INSERT INTO agent_answer_memory (user_id, session_id, input_text, answer)
-            VALUES (?, ?, ?, ?);
-            """,
-            (user_id, session_key, input_text, answer),
-        )
-        conn.execute(
-            """
-            DELETE FROM agent_answer_memory
-            WHERE user_id = ?
-              AND session_id = ?
-              AND id NOT IN (
-                  SELECT id
-                  FROM agent_answer_memory
-                  WHERE user_id = ? AND session_id = ?
-                  ORDER BY id DESC
-                  LIMIT ?
-              );
-            """,
-            (
-                user_id,
-                session_key,
-                user_id,
-                session_key,
-                AGENT_MEMORY_LIMIT,
-            ),
-        )
+    session_key = _session_key(session_id)
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            _init_agent_memory_tables(cur)
+            cur.execute(
+                """
+                INSERT INTO agent_chat_sessions (session_id, user_id)
+                VALUES (%(session_id)s::uuid, %(user_id)s)
+                ON CONFLICT (session_id) DO UPDATE SET
+                    user_id = EXCLUDED.user_id,
+                    updated_at = NOW();
+                """,
+                {"session_id": session_key, "user_id": user_id},
+            )
+            cur.execute(
+                """
+                INSERT INTO agent_chat_messages (
+                    session_id,
+                    user_id,
+                    role,
+                    content,
+                    input_text,
+                    answer
+                )
+                VALUES
+                    (
+                        %(session_id)s::uuid,
+                        %(user_id)s,
+                        'user',
+                        %(input_text)s,
+                        %(input_text)s,
+                        NULL
+                    ),
+                    (
+                        %(session_id)s::uuid,
+                        %(user_id)s,
+                        'assistant',
+                        %(answer)s,
+                        %(input_text)s,
+                        %(answer)s
+                    );
+                """,
+                {
+                    "session_id": session_key,
+                    "user_id": user_id,
+                    "input_text": input_text,
+                    "answer": answer,
+                },
+            )
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
 
     return _fetch_answer_memory(user_id, session_key)
 
@@ -431,6 +486,10 @@ def _jsonable_rows(rows) -> list[dict[str, Any]]:
         for key, value in dict(row).items():
             if isinstance(value, Decimal):
                 value = float(value)
+            elif isinstance(value, (datetime, date)):
+                value = value.isoformat()
+            elif isinstance(value, UUID):
+                value = str(value)
             clean_row[key] = value
         result.append(clean_row)
     return result
@@ -480,10 +539,27 @@ def _agent_search_params(parsed_query: AgentParsedQuery) -> dict[str, Any]:
     }
 
 
-def _extract_agent_query(request: AgentRequest) -> AgentParsedQuery:
+def _build_query_extract_input(
+    request: AgentRequest,
+    answer_memory: list[dict[str, Any]],
+) -> str:
+    if not answer_memory:
+        return request.input_text
+
+    return (
+        f"USER_INPUT: {request.input_text}\n\n"
+        "ANSWER_MEMORY:\n"
+        f"{json.dumps(answer_memory, ensure_ascii=False)}"
+    )
+
+
+def _extract_agent_query(
+    request: AgentRequest,
+    answer_memory: Optional[list[dict[str, Any]]] = None,
+) -> AgentParsedQuery:
     try:
         raw = _call_deepseek(
-            request.input_text,
+            _build_query_extract_input(request, answer_memory or []),
             AGENT_QUERY_EXTRACT_PROMPT,
             temperature=0,
             max_tokens=500,
@@ -1062,12 +1138,11 @@ async def parse_trip(request: TripRequest):
 
 @app.post("/agent", response_model=AgentResponse)
 async def ask_agent(request: AgentRequest):
-    parsed_query = _extract_agent_query(request)
-
     try:
+        answer_memory = _fetch_answer_memory(request.user_id, request.session_id)
+        parsed_query = _extract_agent_query(request, answer_memory)
         database_context = _fetch_agent_context(parsed_query)
         user_context = _fetch_user_context(request.user_id)
-        answer_memory = _fetch_answer_memory(request.user_id, request.session_id)
     except Exception as exc:
         raise HTTPException(
             status_code=503,
