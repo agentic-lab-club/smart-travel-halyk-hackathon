@@ -69,6 +69,5 @@ The prototype assumes one universal system behavior:
 The current prototype is centered around:
 
 - Kazakhstan
-- Turkey
-- UAE
 - Japan
+- Germany
