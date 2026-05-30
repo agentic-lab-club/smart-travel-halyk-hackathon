@@ -86,3 +86,25 @@ struct FlowLayout: View {
         }
     }
 }
+
+struct EntryFlowComponents_Previews: PreviewProvider {
+    static var previews: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            SectionHeader(
+                title: "Ready trips",
+                subtitle: "Personalized from profile, season, budget and cashback."
+            )
+            HStack {
+                MetricPill(title: "People", value: "2")
+                MetricPill(title: "Dates", value: "Jun - Sep")
+            }
+            HStack {
+                PriceBlock(title: "Budget", value: "742 000 KZT")
+                DestinationBadge(countryCode: "TR")
+            }
+            FlowLayout(items: ["Visa-free", "Direct flight", "Food match", "Cashback boost"])
+        }
+        .padding()
+        .background(Color(.systemGroupedBackground))
+    }
+}

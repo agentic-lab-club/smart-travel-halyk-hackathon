@@ -44,3 +44,14 @@ struct EntryHeroView: View {
         return "From \(profile.homeCity), \(profile.travelProfile.budgetLevel.title) style, \(profile.currency.rawValue) budget."
     }
 }
+
+struct EntryHeroView_Previews: PreviewProvider {
+    static var previews: some View {
+        VStack(spacing: 16) {
+            EntryHeroView(profile: MockTravelData.userProfile)
+            EntryHeroView(profile: nil)
+        }
+        .padding()
+        .background(Color(.systemGroupedBackground))
+    }
+}

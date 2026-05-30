@@ -1,9 +1,11 @@
 import SwiftUI
 
 struct PreferenceInputPanel: View {
-    @ObservedObject var viewModel: EntryFlowViewModel
+    @Environment(EntryFlowViewModel.self) private var viewModel
 
     var body: some View {
+        @Bindable var viewModel = viewModel
+
         VStack(alignment: .leading, spacing: 14) {
             SectionHeader(
                 title: "Quick preferences",
@@ -54,5 +56,22 @@ struct PreferenceInputPanel: View {
         }
         .padding(16)
         .background(.background, in: .rect(cornerRadius: 8))
+    }
+}
+
+struct PreferenceInputPanel_Previews: PreviewProvider {
+    static var previews: some View {
+        PreferenceInputPanelPreview()
+            .padding()
+            .background(Color(.systemGroupedBackground))
+    }
+
+    private struct PreferenceInputPanelPreview: View {
+        @State private var viewModel = EntryFlowViewModel(apiClient: .mockingFallback())
+
+        var body: some View {
+            PreferenceInputPanel()
+                .environment(viewModel)
+        }
     }
 }

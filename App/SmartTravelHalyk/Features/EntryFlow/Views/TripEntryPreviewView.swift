@@ -52,3 +52,11 @@ struct TripEntryPreviewView: View {
         .navigationBarTitleDisplayMode(.inline)
     }
 }
+
+struct TripEntryPreviewView_Previews: PreviewProvider {
+    static var previews: some View {
+        NavigationStack {
+            TripEntryPreviewView(recommendation: MockTravelData.recommendations.recommendations[0])
+        }
+    }
+}

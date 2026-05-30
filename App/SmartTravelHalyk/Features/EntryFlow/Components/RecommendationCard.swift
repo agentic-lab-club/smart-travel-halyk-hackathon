@@ -1,46 +1,74 @@
 import SwiftUI
+import VariableBlur
 
 struct RecommendationCard: View {
     let recommendation: TripRecommendation
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack(alignment: .top, spacing: 14) {
-                DestinationBadge(countryCode: recommendation.countryCode)
+        VStack(alignment: .leading, spacing: 10) {
+            VStack(alignment: .leading) {
+                Text(recommendation.destinationTitle)
+                    .font(.title)
+                    .bold()
+                    .foregroundStyle(.white)
 
-                VStack(alignment: .leading, spacing: 6) {
-                    Text(recommendation.destinationTitle)
-                        .font(.headline)
-                        .foregroundStyle(.primary)
-                        .fixedSize(horizontal: false, vertical: true)
-
-                    Text(recommendation.mainReason)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(2)
-                }
-
-                Spacer(minLength: 8)
-
-                Image(systemName: "chevron.right")
-                    .font(.caption.weight(.bold))
-                    .foregroundStyle(.tertiary)
-                    .padding(.top, 4)
+                Text(recommendation.destinationName)
+                    .font(.headline.weight(.semibold))
+                    .foregroundStyle(.secondary)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(16)
+            .background {
+                VariableBlurView(maxBlurRadius: 20, direction: .blurredTopClearBottom)
             }
 
-            HStack(spacing: 10) {
-                PriceBlock(title: "Budget", value: recommendation.estimatedTotalCost.displayString)
+            Spacer()
 
-                if let cashback = recommendation.cashbackEstimate {
-                    PriceBlock(title: "Cashback", value: cashback.displayString)
-                }
+            VStack(alignment: .leading) {
+                Text(recommendation.durationDays == 1 ? "1 day" : "\(recommendation.durationDays) days")
+                    .font(.largeTitle)
+                    .bold()
+                    .foregroundStyle(.white)
 
-                PriceBlock(title: "Days", value: "\(recommendation.durationDays)")
+                Text(recommendation.estimatedTotalCost.displayString)
+                    .font(.largeTitle)
+                    .bold()
+                    .foregroundStyle(.white)
+                    .overlay(alignment: .topTrailing) {
+                        if let cashback = recommendation.cashbackEstimate {
+                            Text(cashback.displayString)
+                                .font(.footnote)
+                                .fontWeight(.semibold)
+                                .padding(8)
+                                .background {
+                                    Capsule().foregroundStyle(.white)
+                                }
+                                .offset(x: 20, y: -20)
+                        }
+                    }
             }
-
-            FlowLayout(items: recommendation.reasonLabels)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(16)
         }
-        .padding(16)
-        .background(.background, in: .rect(cornerRadius: 8))
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(height: 450)
+        .background {
+            // FIXME: Add image from api
+            Image("ExampleTripImage")
+                .scaledToFill()
+                .clipped()
+        }
+        .clipped()
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+    }
+}
+
+struct RecommendationCard_Previews: PreviewProvider {
+    static var previews: some View {
+        VStack(spacing: 12) {
+            RecommendationCard(recommendation: MockTravelData.recommendations.recommendations[0])
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding()
     }
 }

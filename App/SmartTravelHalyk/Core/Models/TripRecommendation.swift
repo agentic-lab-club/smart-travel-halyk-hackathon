@@ -4,6 +4,7 @@ struct TripRecommendation: Codable, Equatable, Identifiable {
     var id: String { tripId }
 
     let tripId: String
+    let destinationName: String
     let destinationTitle: String
     let countryCode: String
     let cityCodes: [String]

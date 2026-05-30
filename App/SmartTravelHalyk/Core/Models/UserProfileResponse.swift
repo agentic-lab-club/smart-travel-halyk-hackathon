@@ -8,6 +8,7 @@ struct UserProfileResponse: Codable, Equatable {
     }
 
     let userId: String
+    let name: String
     let citizenship: String
     let homeCity: String
     let homeAirport: String

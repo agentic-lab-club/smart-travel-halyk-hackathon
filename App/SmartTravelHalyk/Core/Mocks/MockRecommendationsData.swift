@@ -8,6 +8,7 @@ extension MockTravelData {
         recommendations: [
             TripRecommendation(
                 tripId: "trip-istanbul-001",
+                destinationName: "Istanbul, Turkey",
                 destinationTitle: "Istanbul food and Bosphorus weekend",
                 countryCode: "TR",
                 cityCodes: ["IST"],
@@ -24,6 +25,7 @@ extension MockTravelData {
             ),
             TripRecommendation(
                 tripId: "trip-tbilisi-001",
+                destinationName: "Tbilisi, Georgia",
                 destinationTitle: "Tbilisi old town and wine route",
                 countryCode: "GE",
                 cityCodes: ["TBS", "KAKHETI"],
@@ -40,6 +42,7 @@ extension MockTravelData {
             ),
             TripRecommendation(
                 tripId: "trip-almaty-weekend-001",
+                destinationName: "Almaty, Kazakhstan",
                 destinationTitle: "Almaty mountain reset weekend",
                 countryCode: "KZ",
                 cityCodes: ["ALA"],
@@ -56,6 +59,7 @@ extension MockTravelData {
             ),
             TripRecommendation(
                 tripId: "trip-seoul-seasonal-001",
+                destinationName: "Seoul, South Korea",
                 destinationTitle: "Seoul summer shopping and street food",
                 countryCode: "KR",
                 cityCodes: ["SEL"],
@@ -72,6 +76,7 @@ extension MockTravelData {
             ),
             TripRecommendation(
                 tripId: "trip-dubai-comfort-001",
+                destinationName: "Dubai, United Arab Emirates",
                 destinationTitle: "Dubai comfort escape",
                 countryCode: "AE",
                 cityCodes: ["DXB"],
@@ -88,6 +93,7 @@ extension MockTravelData {
             ),
             TripRecommendation(
                 tripId: "trip-jordan-route-001",
+                destinationName: "Amman, Petra and Dead Sea, Jordan",
                 destinationTitle: "Jordan route: Amman, Petra and Dead Sea",
                 countryCode: "JO",
                 cityCodes: ["AMM", "PETRA", "DEADSEA"],

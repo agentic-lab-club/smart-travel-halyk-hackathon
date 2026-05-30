@@ -3,6 +3,7 @@ import Foundation
 extension MockTravelData {
     static let userProfile = UserProfileResponse(
         userId: "user-001",
+        name: "Aigerim",
         citizenship: "KZ",
         homeCity: "Almaty",
         homeAirport: "ALA",
