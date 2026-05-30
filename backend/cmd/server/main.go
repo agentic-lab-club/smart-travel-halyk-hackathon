@@ -27,6 +27,7 @@ import (
 	"time"
 
 	"github.com/agentic-lab-club/smart-travel-halyk-hackathon/backend/internal/healthcheck"
+	"github.com/agentic-lab-club/smart-travel-halyk-hackathon/backend/internal/trip"
 	"github.com/agentic-lab-club/smart-travel-halyk-hackathon/backend/pkg/config"
 	"github.com/agentic-lab-club/smart-travel-halyk-hackathon/backend/pkg/database"
 	md "github.com/agentic-lab-club/smart-travel-halyk-hackathon/backend/pkg/http/middlewares"
@@ -99,6 +100,7 @@ func main() {
 
 	registerDocsRoutes(server)
 	healthcheck.Init(server, trackedDB, cfg)
+	trip.Init(server, trackedDB, cfg)
 
 	log.Info().Str("event", "init_http_server_success").Int("port", cfg.Server.Port).Msg("HTTP server initialized successfully")
 

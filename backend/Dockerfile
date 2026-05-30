@@ -31,6 +31,7 @@ ARG GEN_SWAGGER=1
 
 COPY . .
 
+# Generate Swagger artifacts when enabled.
 RUN if [ "$GEN_SWAGGER" = "1" ]; then \
       go install github.com/swaggo/swag/cmd/swag@v1.8.1; \
       rm -f /src/docs/docs.go || true; \
@@ -47,8 +48,9 @@ RUN if [ "$GEN_SWAGGER" = "1" ]; then \
       echo "Skipping swagger generation"; \
     fi
 
-# Build a static binary for Linux
-RUN --mount=type=cache,target=/root/.cache/go-build \
+# Build a static binary for Linux (use build cache for modules and go-build)
+RUN --mount=type=cache,target=/go/pkg/mod \
+    --mount=type=cache,target=/root/.cache/go-build \
     CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
     go build -ldflags="-s -w" -o /out/backend ./cmd/server
 
@@ -72,8 +74,8 @@ COPY --from=builder /src/docs/ /app/docs/
 # Copy configuration directory (optional; can also be mounted)
 COPY config/ /app/config/
 
-# Copy DB migrations (app expects ./db/migrations from WORKDIR /app)
-COPY db/ /app/db/
+# Copy DB migrations only (runtime only needs migrations, not the dump)
+COPY db/migrations/ /app/db/migrations/
 
 # Default HTTP port (match config)
 EXPOSE 8080
@@ -82,5 +84,3 @@ USER app
 
 ENTRYPOINT ["/app/backend"]
 CMD ["-config=prod"]
-
-

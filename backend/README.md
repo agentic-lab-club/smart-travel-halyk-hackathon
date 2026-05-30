@@ -4,6 +4,7 @@ Go backend for Smart Travel Halyk with:
 
 - `Fiber v3` HTTP server
 - `PostgreSQL` + auto migrations via `goose`
+- `Trip planning` prototype endpoints under `/api/v1/trips`
 - `/health` and `/api/v1/healthcheck/*` endpoints
 - Prometheus metrics support
 - Swagger generation support
@@ -23,6 +24,7 @@ API defaults:
 
 - App: `http://localhost:8080`
 - Health: `http://localhost:8080/health`
+- Trips: `http://localhost:8080/api/v1/trips`
 - Readiness: `http://localhost:8080/health/readiness`
 - Liveness: `http://localhost:8080/health/liveness`
 - Metrics: `http://localhost:8080/metrics`

@@ -61,11 +61,16 @@ type MetricsConfig struct {
 	Namespace string `mapstructure:"namespace"`
 }
 
+type AIAgentConfig struct {
+	URL string `mapstructure:"url"`
+}
+
 // Config is the root configuration.
 type Config struct {
 	Server      HttpConfig      `mapstructure:"server"`
 	Database    PostgresConfig  `mapstructure:"database"`
 	Gotenberg   GotenbergConfig `mapstructure:"gotenberg"`
+	AIAgent     AIAgentConfig   `mapstructure:"ai_agent"`
 	Environment string          `mapstructure:"environment"`
 	Logging     LoggingConfig   `mapstructure:"logging"`
 	Security    SecurityConfig  `mapstructure:"security"`
@@ -130,6 +135,9 @@ func Load() (cfg *Config, err error) {
 	if cfg.Metrics.Namespace == "" {
 		cfg.Metrics.Namespace = "backend"
 	}
+	if cfg.AIAgent.URL == "" {
+		cfg.AIAgent.URL = "http://localhost:9094"
+	}
 
 	overrideFromEnv(cfg)
 
@@ -173,5 +181,8 @@ func overrideFromEnv(cfg *Config) {
 	}
 	if value := os.Getenv("METRICS_PATH"); value != "" {
 		cfg.Metrics.Path = value
+	}
+	if value := os.Getenv("AI_AGENT_URL"); value != "" {
+		cfg.AIAgent.URL = value
 	}
 }
