@@ -1108,7 +1108,6 @@ def _build_agent_prompt(
 # ---------------------------------------------------------------------------
 
 @app.post("/parse-trip", response_model=TripResponse)
-@app.post("/parser-trip", response_model=TripResponse)
 async def parse_trip(request: TripRequest):
     try:
         raw = _call_deepseek(request.text, SYSTEM_PROMPT)
