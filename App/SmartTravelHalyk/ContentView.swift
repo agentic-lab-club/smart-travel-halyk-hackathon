@@ -1,32 +1,31 @@
 import SwiftUI
 
 struct ContentView: View {
+    @State private var entryViewModel = EntryFlowViewModel(apiClient: .mockingFallback())
+    @Environment(BookingService.self) private var bookingService
+
     var body: some View {
-        NavigationStack {
-            VStack(spacing: 24) {
-                Image(systemName: "airplane.departure")
-                    .font(.system(size: 56, weight: .semibold))
-                    .foregroundStyle(.green)
-                    .accessibilityHidden(true)
-
-                VStack(spacing: 8) {
-                    Text("Smart Travel")
-                        .font(.largeTitle.bold())
-
-                    Text("Halyk hackathon iOS starter app")
-                        .font(.headline)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
+        TabView {
+            Tab("Discover", systemImage: "sparkles") {
+                NavigationStack {
+                    EntryFlowView()
+                        .task { await entryViewModel.load() }
                 }
+                .environment(entryViewModel)
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .padding()
-            .background(Color(.systemGroupedBackground))
-            .navigationTitle("Travel")
+
+            Tab("My Trips", systemImage: "suitcase.fill") {
+                MyTripsView(bookingService: bookingService)
+            }
         }
+        .tint(.green)
     }
 }
 
-#Preview {
-    ContentView()
+struct ContentView_Previews: PreviewProvider {
+    static var previews: some View {
+        let service = BookingService()
+        ContentView()
+            .environment(service)
+    }
 }
