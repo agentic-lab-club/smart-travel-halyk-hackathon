@@ -1,0 +1,152 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+.yarn/
+.yarn/cache/
+.yarn/unplugged/
+.yarn/build-state.yml
+.yarn/install-state.gz
+
+# Package managers
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+bun.lockb
+
+# Environment files
+.env
+.env.*
+!.env.example
+!.env.template
+
+# Build outputs
+dist/
+build/
+out/
+.next/
+.nuxt/
+.output/
+.vercel/
+.netlify/
+.turbo/
+.cache/
+.parcel-cache/
+.vite/
+
+# TypeScript
+*.tsbuildinfo
+
+# Logs
+logs/
+*.log
+
+# Testing / coverage
+coverage/
+.nyc_output/
+playwright-report/
+test-results/
+cypress/videos/
+cypress/screenshots/
+
+# OS files
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# IDE / editors
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.example.json
+.idea/
+*.swp
+*.swo
+*.swn
+
+# Python, if scripts/notebooks are used
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+env/
+.ipynb_checkpoints/
+
+# Swift / Xcode, if repo has iOS/macOS parts
+DerivedData/
+.build/
+.swiftpm/
+Package.resolved
+xcuserdata/
+*.xcuserstate
+*.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+
+# Android / Flutter, if used
+.gradle/
+local.properties
+captures/
+.externalNativeBuild/
+.cxx/
+*.apk
+*.aab
+.flutter-plugins
+.flutter-plugins-dependencies
+.dart_tool/
+.packages
+.pub-cache/
+.pub/
+build/
+
+# Firebase / Amplify / cloud local files
+.firebase/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+amplify/#current-cloud-backend/
+amplify/.config/local-*
+amplify/logs/
+aws-exports.js
+awsconfiguration.json
+
+# AI / local agent scratch
+.codex/
+.cursor/
+.claude/
+.agent/
+tmp/
+temp/
+scratch/
+
+# Local generated docs or exports
+notion-export/
+exports/
+
+# Large local data / mock dumps
+data/local/
+data/raw/
+*.sqlite
+*.sqlite3
+*.db
+
+# Secrets / keys
+*.pem
+*.key
+*.p8
+*.p12
+*.mobileprovision
+*.cer
+secrets/
+credentials/
+service-account*.json
+
+# Misc archives
+*.zip
+*.tar
+*.tar.gz
+*.rar
