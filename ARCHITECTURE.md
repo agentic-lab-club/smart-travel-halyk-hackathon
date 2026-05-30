@@ -41,6 +41,10 @@ The trip module currently uses in-memory repository state even though PostgreSQL
 
 ## Architecture Diagram
 
+![Architecture-Diagram.png](/docs/assets/Architecture-Diagram.png)
+
+---
+
 ```plantuml
 @startuml
 left to right direction
@@ -90,6 +94,10 @@ end note
 ```
 
 ## C4 Diagram (Container Diagram)
+
+![C4-Diagram-Container-Diagram.png](/docs/assets/C4-Diagram-Container-Diagram.png)
+
+---
 
 ```plantuml
 @startuml
@@ -150,6 +158,10 @@ end note
 
 ## Backend Component Diagram
 
+![Backend-Component-Diagram.png](/docs/assets/Backend-Component-Diagram.png)
+
+---
+
 ```plantuml
 @startuml
 !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
@@ -180,6 +192,10 @@ Rel(plannerclient, aiagent, "POST /plan", "HTTP / JSON")
 ```
 
 ## Runtime Sequence
+
+![Runtime-Sequence.png](/docs/assets/Runtime-Sequence.png)
+
+---
 
 ```plantuml
 @startuml
@@ -251,6 +267,12 @@ The mock data layer is responsible for:
 ## ERD (Entity Relationship Diagram)
 
 The ERD below represents the logical target schema for the trip planning system. It is the intended data model even though the current MVP stores trip state in memory.
+
+---
+
+![ERD-Entity-Relationship-Diagram.png](/docs/assets/ERD-Entity-Relationship-Diagram.png)
+
+---
 
 ```plantuml
 @startuml
