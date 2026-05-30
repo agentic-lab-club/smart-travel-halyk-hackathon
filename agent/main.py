@@ -1,4 +1,4 @@
-"""FastAPI service that parses free-text travel requests via DeepSeek LLM."""
+"""FastAPI service for travel parsing and place Q&A via DeepSeek LLM."""
 import json
 import os
 from typing import Optional
@@ -6,7 +6,7 @@ from typing import Optional
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from openai import OpenAI
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 load_dotenv()
 
@@ -16,7 +16,7 @@ if not DEEPSEEK_API_KEY:
 
 client = OpenAI(api_key=DEEPSEEK_API_KEY, base_url="https://api.deepseek.com")
 
-app = FastAPI(title="SmartTravel Halyk — Trip Parser")
+app = FastAPI(title="SmartTravel Halyk — Travel Agent")
 
 # ---------------------------------------------------------------------------
 # Pydantic models
@@ -94,6 +94,77 @@ class TripResponse(BaseModel):
     raw_text: str
 
 
+class AgentRequest(BaseModel):
+    text: Optional[str] = Field(
+        default=None,
+        description="User question about a place or attraction",
+    )
+    question: Optional[str] = Field(
+        default=None,
+        description="Alias for text, useful for backend clients",
+    )
+    place: Optional[str] = Field(
+        default=None,
+        description="Place name, city, region or country",
+    )
+    attraction: Optional[str] = Field(
+        default=None,
+        description="Attraction name",
+    )
+    city: Optional[str] = Field(default=None, description="City context")
+    country: Optional[str] = Field(default=None, description="Country context")
+    language: Optional[str] = Field(
+        default=None,
+        description="Preferred answer language, e.g. ru, kk, en",
+    )
+
+    @field_validator(
+        "text",
+        "question",
+        "place",
+        "attraction",
+        "city",
+        "country",
+        "language",
+    )
+    @classmethod
+    def normalize_blank(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return None
+        v_clean = v.strip()
+        return v_clean or None
+
+    @model_validator(mode="after")
+    def validate_payload(self):
+        if not any([self.text, self.question, self.place, self.attraction]):
+            raise ValueError("Provide text/question, place, or attraction")
+        return self
+
+    def to_prompt(self) -> str:
+        parts = []
+        user_question = self.text or self.question
+
+        if user_question:
+            parts.append(f"Question: {user_question}")
+        if self.attraction:
+            parts.append(f"Attraction: {self.attraction}")
+        if self.place:
+            parts.append(f"Place: {self.place}")
+        if self.city:
+            parts.append(f"City: {self.city}")
+        if self.country:
+            parts.append(f"Country: {self.country}")
+        if self.language:
+            parts.append(f"Preferred answer language: {self.language}")
+
+        return "\n".join(parts)
+
+
+class AgentResponse(BaseModel):
+    answer: str
+    raw_text: str
+
+
 # ---------------------------------------------------------------------------
 # System prompt
 # ---------------------------------------------------------------------------
@@ -124,15 +195,38 @@ Rules:
 6. If a field is not explicitly mentioned in the user's message, set it to **null**. Do NOT guess defaults."""
 
 
-def _call_deepseek(user_text: str) -> str:
+PLACE_AGENT_SYSTEM_PROMPT = """You are a helpful travel guide agent for SmartTravel Halyk.
+The user asks about a tourist attraction, city, country, neighborhood, landmark, or a place in a trip.
+
+Answer in the user's language unless a preferred answer language is provided.
+Give practical, concise information:
+- what the place or attraction is;
+- why it is interesting;
+- what to see or do there;
+- visit tips, timing, etiquette, transport or safety notes when useful;
+- nearby context if the city/country is provided.
+
+Rules:
+1. Do not parse trip dates or budgets here. This endpoint is for place and attraction Q&A.
+2. Do not invent exact current ticket prices, opening hours, event schedules, or temporary closures. If the user asks for current details, say they should be checked before visiting.
+3. If the place is ambiguous, explain the likely interpretation and ask for city/country only if needed.
+4. Keep the answer useful for a mobile app: clear paragraphs or short bullet points, no markdown tables."""
+
+
+def _call_deepseek(
+    user_text: str,
+    system_prompt: str,
+    temperature: float = 0.1,
+    max_tokens: int = 512,
+) -> str:
     response = client.chat.completions.create(
         model="deepseek-chat",
         messages=[
-            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_text},
         ],
-        temperature=0.1,
-        max_tokens=512,
+        temperature=temperature,
+        max_tokens=max_tokens,
     )
     return response.choices[0].message.content
 
@@ -154,9 +248,10 @@ def _sanitize_json(text: str) -> str:
 # ---------------------------------------------------------------------------
 
 @app.post("/parse-trip", response_model=TripResponse)
+@app.post("/parser-trip", response_model=TripResponse)
 async def parse_trip(request: TripRequest):
     try:
-        raw = _call_deepseek(request.text)
+        raw = _call_deepseek(request.text, SYSTEM_PROMPT)
         clean = _sanitize_json(raw)
         data = json.loads(clean)
     except json.JSONDecodeError as exc:
@@ -179,6 +274,25 @@ async def parse_trip(request: TripRequest):
         )
 
     return TripResponse(parsed=parsed, raw_text=raw)
+
+
+@app.post("/agent", response_model=AgentResponse)
+async def ask_agent(request: AgentRequest):
+    try:
+        raw = _call_deepseek(
+            request.to_prompt(),
+            PLACE_AGENT_SYSTEM_PROMPT,
+            temperature=0.3,
+            max_tokens=900,
+        )
+    except Exception as exc:
+        raise HTTPException(
+            status_code=502,
+            detail=f"DeepSeek API error: {exc}",
+        )
+
+    answer = raw.strip()
+    return AgentResponse(answer=answer, raw_text=raw)
 
 
 @app.get("/health")
