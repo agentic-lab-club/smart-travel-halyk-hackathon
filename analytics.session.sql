@@ -1,1 +1,1 @@
-SELECT * FROM account_transactions
+SELECT * FROM popular_restaurants
