@@ -1,13 +1,14 @@
 """FastAPI service for travel parsing and place Q&A via DeepSeek LLM."""
 import json
 import os
+import sqlite3
 from decimal import Decimal
 from typing import Any, Optional
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from openai import OpenAI
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field, field_validator
 
 load_dotenv()
 
@@ -18,6 +19,12 @@ if not DEEPSEEK_API_KEY:
 client = OpenAI(api_key=DEEPSEEK_API_KEY, base_url="https://api.deepseek.com")
 
 app = FastAPI(title="SmartTravel Halyk — Travel Agent")
+
+AGENT_MEMORY_DB_PATH = os.getenv(
+    "AGENT_MEMORY_DB_PATH",
+    os.path.join(os.path.dirname(__file__), "agent_memory.sqlite3"),
+)
+AGENT_MEMORY_LIMIT = 5
 
 # ---------------------------------------------------------------------------
 # Pydantic models
@@ -96,36 +103,64 @@ class TripResponse(BaseModel):
 
 
 class AgentRequest(BaseModel):
-    text: Optional[str] = Field(
-        default=None,
-        description="User question about a place or attraction",
+    model_config = ConfigDict(populate_by_name=True)
+
+    input_text: str = Field(
+        ...,
+        validation_alias=AliasChoices("input_text", "inputText", "text", "question"),
+        description="Free-text user question or request",
     )
-    question: Optional[str] = Field(
-        default=None,
-        description="Alias for text, useful for backend clients",
+    user_id: int = Field(
+        ...,
+        validation_alias=AliasChoices("user_id", "userId"),
+        description="Application user id",
     )
-    place: Optional[str] = Field(
+    session_id: Optional[str] = Field(
         default=None,
-        description="Place name, city, region or country",
+        validation_alias=AliasChoices("session_id", "sessionId"),
+        description="Optional chat/session id. Defaults to 'default' per user.",
     )
-    attraction: Optional[str] = Field(
-        default=None,
-        description="Attraction name",
-    )
-    city: Optional[str] = Field(default=None, description="City context")
-    country: Optional[str] = Field(default=None, description="Country context")
     language: Optional[str] = Field(
         default=None,
+        validation_alias=AliasChoices("language", "lang"),
         description="Preferred answer language, e.g. ru, kk, en",
     )
 
+    @field_validator("input_text", "session_id", "language")
+    @classmethod
+    def normalize_text_fields(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return None
+        v_clean = v.strip()
+        if not v_clean and v is not None:
+            return None
+        return v_clean
+
+    @field_validator("input_text")
+    @classmethod
+    def validate_input_text(cls, v: Optional[str]) -> str:
+        if not v:
+            raise ValueError("input_text is required")
+        return v
+
+
+class AgentParsedQuery(BaseModel):
+    question: str = Field(..., description="Cleaned user question")
+    country: Optional[str] = Field(default=None, description="Detected country")
+    city: Optional[str] = Field(default=None, description="City context")
+    place: Optional[str] = Field(default=None, description="Detected place")
+    attraction: Optional[str] = Field(default=None, description="Detected attraction")
+    language: Optional[str] = Field(default=None, description="Answer language")
+    include_attractions: bool = True
+    include_restaurants: bool = True
+    include_seasonal_events: bool = True
+
     @field_validator(
-        "text",
         "question",
+        "country",
+        "city",
         "place",
         "attraction",
-        "city",
-        "country",
         "language",
     )
     @classmethod
@@ -135,27 +170,10 @@ class AgentRequest(BaseModel):
         v_clean = v.strip()
         return v_clean or None
 
-    @model_validator(mode="after")
-    def validate_payload(self):
-        if not any(
-            [
-                self.text,
-                self.question,
-                self.place,
-                self.attraction,
-                self.city,
-                self.country,
-            ]
-        ):
-            raise ValueError("Provide text/question, place, attraction, city, or country")
-        return self
-
     def to_prompt(self) -> str:
         parts = []
-        user_question = self.text or self.question
 
-        if user_question:
-            parts.append(f"Question: {user_question}")
+        parts.append(f"Question: {self.question}")
         if self.attraction:
             parts.append(f"Attraction: {self.attraction}")
         if self.place:
@@ -171,9 +189,11 @@ class AgentRequest(BaseModel):
 
 
 class AgentResponse(BaseModel):
+    user_id: int
+    parsed_query: AgentParsedQuery
     answer: str
     raw_text: str
-    context: dict[str, list[dict[str, Any]]] = Field(default_factory=dict)
+    context: dict[str, Any] = Field(default_factory=dict)
 
 
 # ---------------------------------------------------------------------------
@@ -206,11 +226,34 @@ Rules:
 6. If a field is not explicitly mentioned in the user's message, set it to **null**. Do NOT guess defaults."""
 
 
+AGENT_QUERY_EXTRACT_PROMPT = """You are a query planner for a travel database agent.
+The user writes one free-text message. Extract search fields for the database and return ONLY valid JSON.
+
+JSON fields:
+- "question": cleaned original question, string.
+- "country": country if mentioned. Prefer one of ["Казахстан", "Япония", "Германия"], otherwise null.
+- "city": city if mentioned, otherwise null.
+- "place": place name, district, area, or broad location if mentioned, otherwise null.
+- "attraction": attraction/landmark name if mentioned, otherwise null.
+- "language": likely answer language code ("ru", "kk", "en") if detectable, otherwise null.
+- "include_attractions": true if the user asks what to see, attractions, places, landmarks, routes, or general city/country info.
+- "include_restaurants": true if the user asks where to eat, restaurants, food, cafes, cuisine, or general city/country info.
+- "include_seasonal_events": true if the user asks about when to go, season, flowers, festivals, holidays, weather windows, or general city/country info.
+
+Rules:
+1. Return ONLY raw JSON. No markdown, no comments.
+2. Do not answer the user. Only extract fields.
+3. Do not invent a city/country/attraction if it is not present.
+4. For general requests like "расскажи про Астану", set all include_* fields to true."""
+
+
 PLACE_AGENT_SYSTEM_PROMPT = """You are a helpful travel guide agent for SmartTravel Halyk.
 The user asks about a tourist attraction, city, country, neighborhood, landmark, or a place in a trip.
 
 Answer in the user's language unless a preferred answer language is provided.
 Use DATABASE_CONTEXT as the primary source. It contains live rows from the service database.
+Use USER_CONTEXT only for light personalization when it is present.
+Use ANSWER_MEMORY to preserve continuity. It contains up to 5 latest previous answers for this user session.
 Give practical, concise information:
 - what the place or attraction is;
 - why it is interesting;
@@ -224,7 +267,8 @@ Rules:
 3. If DATABASE_CONTEXT is empty or does not contain the requested fact, say that the database does not have that exact data yet.
 4. Do not invent exact current ticket prices, opening hours, event schedules, or temporary closures. If the user asks for current details, say they should be checked before visiting.
 5. If the place is ambiguous, explain the likely interpretation and ask for city/country only if needed.
-6. Keep the answer useful for a mobile app: clear paragraphs or short bullet points, no markdown tables."""
+6. Do not repeat ANSWER_MEMORY verbatim unless the user asks to summarize or continue previous answers.
+7. Keep the answer useful for a mobile app: clear paragraphs or short bullet points, no markdown tables."""
 
 
 def _call_deepseek(
@@ -257,6 +301,107 @@ def _sanitize_json(text: str) -> str:
     return text.strip()
 
 
+def _session_key(session_id: Optional[str]) -> str:
+    return session_id.strip() if session_id and session_id.strip() else "default"
+
+
+def _get_memory_connection():
+    memory_dir = os.path.dirname(AGENT_MEMORY_DB_PATH)
+    if memory_dir:
+        os.makedirs(memory_dir, exist_ok=True)
+
+    conn = sqlite3.connect(AGENT_MEMORY_DB_PATH)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+
+def _init_agent_memory_db() -> None:
+    with _get_memory_connection() as conn:
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS agent_answer_memory (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                session_id TEXT NOT NULL DEFAULT 'default',
+                input_text TEXT NOT NULL,
+                answer TEXT NOT NULL,
+                created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+            );
+            """
+        )
+        conn.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_agent_answer_memory_user_session
+            ON agent_answer_memory(user_id, session_id, id DESC);
+            """
+        )
+
+
+def _sqlite_rows(rows) -> list[dict[str, Any]]:
+    return [dict(row) for row in rows]
+
+
+def _fetch_answer_memory(user_id: int, session_id: Optional[str]) -> list[dict[str, Any]]:
+    session_key = _session_key(session_id)
+    _init_agent_memory_db()
+
+    with _get_memory_connection() as conn:
+        rows = conn.execute(
+            """
+            SELECT id, user_id, session_id, input_text, answer, created_at
+            FROM agent_answer_memory
+            WHERE user_id = ? AND session_id = ?
+            ORDER BY id DESC
+            LIMIT ?;
+            """,
+            (user_id, session_key, AGENT_MEMORY_LIMIT),
+        ).fetchall()
+
+    return list(reversed(_sqlite_rows(rows)))
+
+
+def _save_answer_memory(
+    user_id: int,
+    session_id: Optional[str],
+    input_text: str,
+    answer: str,
+) -> list[dict[str, Any]]:
+    session_key = _session_key(session_id)
+    _init_agent_memory_db()
+
+    with _get_memory_connection() as conn:
+        conn.execute(
+            """
+            INSERT INTO agent_answer_memory (user_id, session_id, input_text, answer)
+            VALUES (?, ?, ?, ?);
+            """,
+            (user_id, session_key, input_text, answer),
+        )
+        conn.execute(
+            """
+            DELETE FROM agent_answer_memory
+            WHERE user_id = ?
+              AND session_id = ?
+              AND id NOT IN (
+                  SELECT id
+                  FROM agent_answer_memory
+                  WHERE user_id = ? AND session_id = ?
+                  ORDER BY id DESC
+                  LIMIT ?
+              );
+            """,
+            (
+                user_id,
+                session_key,
+                user_id,
+                session_key,
+                AGENT_MEMORY_LIMIT,
+            ),
+        )
+
+    return _fetch_answer_memory(user_id, session_key)
+
+
 def _clean(value: Optional[str]) -> str:
     return value.strip() if value else ""
 
@@ -265,16 +410,15 @@ def _like_pattern(value: str) -> str:
     return f"%{value}%"
 
 
-def _combined_agent_text(request: AgentRequest) -> str:
+def _combined_agent_text(parsed_query: AgentParsedQuery) -> str:
     return " ".join(
         value
         for value in [
-            request.text,
-            request.question,
-            request.place,
-            request.attraction,
-            request.city,
-            request.country,
+            parsed_query.question,
+            parsed_query.place,
+            parsed_query.attraction,
+            parsed_query.city,
+            parsed_query.country,
         ]
         if value
     )
@@ -313,13 +457,13 @@ def _merge_unique(
     return merged
 
 
-def _agent_search_params(request: AgentRequest) -> dict[str, Any]:
-    search_text = _combined_agent_text(request)
-    country = _clean(request.country)
-    city = _clean(request.city)
-    place = _clean(request.place)
-    attraction = _clean(request.attraction)
-    question = _clean(request.text or request.question)
+def _agent_search_params(parsed_query: AgentParsedQuery) -> dict[str, Any]:
+    search_text = _combined_agent_text(parsed_query)
+    country = _clean(parsed_query.country)
+    city = _clean(parsed_query.city)
+    place = _clean(parsed_query.place)
+    attraction = _clean(parsed_query.attraction)
+    question = _clean(parsed_query.question)
 
     return {
         "search_text": search_text,
@@ -334,6 +478,36 @@ def _agent_search_params(request: AgentRequest) -> dict[str, Any]:
         "question": question,
         "question_pattern": _like_pattern(question),
     }
+
+
+def _extract_agent_query(request: AgentRequest) -> AgentParsedQuery:
+    try:
+        raw = _call_deepseek(
+            request.input_text,
+            AGENT_QUERY_EXTRACT_PROMPT,
+            temperature=0,
+            max_tokens=500,
+        )
+        data = json.loads(_sanitize_json(raw))
+        if not isinstance(data, dict):
+            data = {}
+    except Exception:
+        data = {}
+
+    data["question"] = data.get("question") or request.input_text
+    if request.language:
+        data["language"] = request.language
+
+    try:
+        return AgentParsedQuery(**data)
+    except Exception:
+        return AgentParsedQuery(
+            question=request.input_text,
+            language=request.language,
+            include_attractions=True,
+            include_restaurants=True,
+            include_seasonal_events=True,
+        )
 
 
 def _fetch_matching_countries(cur, params: dict[str, Any]) -> list[dict[str, Any]]:
@@ -672,11 +846,11 @@ def _fetch_matching_seasonal_events(
     )
 
 
-def _fetch_agent_context(request: AgentRequest) -> dict[str, list[dict[str, Any]]]:
+def _fetch_agent_context(parsed_query: AgentParsedQuery) -> dict[str, list[dict[str, Any]]]:
     from db import get_connection
     from psycopg2.extras import RealDictCursor
 
-    params = _agent_search_params(request)
+    params = _agent_search_params(parsed_query)
 
     conn = get_connection()
     try:
@@ -708,15 +882,19 @@ def _fetch_agent_context(request: AgentRequest) -> dict[str, list[dict[str, Any]
                 if city.get("country_code")
             )
 
-            attractions = _fetch_matching_attractions(
-                cur,
-                params,
-                sorted(city_ids),
-                sorted(country_codes),
-                include_country_attractions=not city_ids
-                and bool(country_codes)
-                and not any([params["attraction"], params["place"]]),
-            )
+            if parsed_query.include_attractions:
+                attractions = _fetch_matching_attractions(
+                    cur,
+                    params,
+                    sorted(city_ids),
+                    sorted(country_codes),
+                    include_country_attractions=not city_ids
+                    and bool(country_codes)
+                    and not any([params["attraction"], params["place"]]),
+                )
+            else:
+                attractions = []
+
             city_ids.update(
                 attraction["city_id"]
                 for attraction in attractions
@@ -740,20 +918,27 @@ def _fetch_agent_context(request: AgentRequest) -> dict[str, list[dict[str, Any]
                 if city.get("country_code")
             )
 
-            restaurants = _fetch_matching_restaurants(
-                cur,
-                params,
-                sorted(city_ids),
-                sorted(country_codes),
-                include_country_restaurants=not city_ids and bool(country_codes),
-            )
-            seasonal_events = _fetch_matching_seasonal_events(
-                cur,
-                params,
-                sorted(city_ids),
-                sorted(country_codes),
-                include_country_city_events=not city_ids and bool(country_codes),
-            )
+            if parsed_query.include_restaurants:
+                restaurants = _fetch_matching_restaurants(
+                    cur,
+                    params,
+                    sorted(city_ids),
+                    sorted(country_codes),
+                    include_country_restaurants=not city_ids and bool(country_codes),
+                )
+            else:
+                restaurants = []
+
+            if parsed_query.include_seasonal_events:
+                seasonal_events = _fetch_matching_seasonal_events(
+                    cur,
+                    params,
+                    sorted(city_ids),
+                    sorted(country_codes),
+                    include_country_city_events=not city_ids and bool(country_codes),
+                )
+            else:
+                seasonal_events = []
     finally:
         conn.close()
 
@@ -766,15 +951,79 @@ def _fetch_agent_context(request: AgentRequest) -> dict[str, list[dict[str, Any]
     }
 
 
+def _fetch_user_context(user_id: int) -> dict[str, list[dict[str, Any]]]:
+    from db import get_connection
+    from psycopg2.extras import RealDictCursor
+
+    conn = get_connection()
+    try:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            kino_preferences = _fetch_rows(
+                cur,
+                """
+                SELECT
+                    COALESCE(class_code, 'unknown') AS class_code,
+                    COALESCE(genre_code, 'unknown') AS genre_code,
+                    COALESCE(city, 'unknown') AS city,
+                    COUNT(*) AS events_count,
+                    COALESCE(SUM(total_amount), 0) AS total_amount
+                FROM kino_ticket_transactions
+                WHERE user_id = %(user_id)s
+                  AND (status IS NULL OR status = 'paid')
+                GROUP BY class_code, genre_code, city
+                ORDER BY events_count DESC, total_amount DESC
+                LIMIT 5;
+                """,
+                {"user_id": user_id},
+            )
+            spending_categories = _fetch_rows(
+                cur,
+                """
+                SELECT
+                    COALESCE(category_name, category_code, 'unknown') AS category,
+                    COUNT(*) AS transactions_count,
+                    COALESCE(SUM(amount), 0) AS total_amount
+                FROM account_transactions
+                WHERE user_id = %(user_id)s
+                  AND direction = 'expense'
+                  AND (status IS NULL OR status = 'success')
+                GROUP BY COALESCE(category_name, category_code, 'unknown')
+                ORDER BY total_amount DESC
+                LIMIT 5;
+                """,
+                {"user_id": user_id},
+            )
+    finally:
+        conn.close()
+
+    return {
+        "kino_preferences": kino_preferences,
+        "spending_categories": spending_categories,
+    }
+
+
 def _build_agent_prompt(
     request: AgentRequest,
-    context: dict[str, list[dict[str, Any]]],
+    parsed_query: AgentParsedQuery,
+    database_context: dict[str, list[dict[str, Any]]],
+    user_context: dict[str, list[dict[str, Any]]],
+    answer_memory: list[dict[str, Any]],
 ) -> str:
-    context_json = json.dumps(context, ensure_ascii=False)
+    parsed_json = json.dumps(parsed_query.model_dump(), ensure_ascii=False)
+    database_context_json = json.dumps(database_context, ensure_ascii=False)
+    user_context_json = json.dumps(user_context, ensure_ascii=False)
+    answer_memory_json = json.dumps(answer_memory, ensure_ascii=False)
     return (
-        f"{request.to_prompt()}\n\n"
+        f"USER_ID: {request.user_id}\n"
+        f"SESSION_ID: {_session_key(request.session_id)}\n"
+        f"USER_INPUT: {request.input_text}\n"
+        f"PARSED_QUERY: {parsed_json}\n\n"
+        "ANSWER_MEMORY:\n"
+        f"{answer_memory_json}\n\n"
+        "USER_CONTEXT:\n"
+        f"{user_context_json}\n\n"
         "DATABASE_CONTEXT:\n"
-        f"{context_json}"
+        f"{database_context_json}"
     )
 
 
@@ -813,17 +1062,27 @@ async def parse_trip(request: TripRequest):
 
 @app.post("/agent", response_model=AgentResponse)
 async def ask_agent(request: AgentRequest):
+    parsed_query = _extract_agent_query(request)
+
     try:
-        context = _fetch_agent_context(request)
+        database_context = _fetch_agent_context(parsed_query)
+        user_context = _fetch_user_context(request.user_id)
+        answer_memory = _fetch_answer_memory(request.user_id, request.session_id)
     except Exception as exc:
         raise HTTPException(
             status_code=503,
-            detail=f"Travel database error: {exc}",
+            detail=f"Travel database or memory error: {exc}",
         )
 
     try:
         raw = _call_deepseek(
-            _build_agent_prompt(request, context),
+            _build_agent_prompt(
+                request,
+                parsed_query,
+                database_context,
+                user_context,
+                answer_memory,
+            ),
             PLACE_AGENT_SYSTEM_PROMPT,
             temperature=0.3,
             max_tokens=900,
@@ -835,7 +1094,34 @@ async def ask_agent(request: AgentRequest):
         )
 
     answer = raw.strip()
-    return AgentResponse(answer=answer, raw_text=raw, context=context)
+    try:
+        updated_answer_memory = _save_answer_memory(
+            request.user_id,
+            request.session_id,
+            request.input_text,
+            answer,
+        )
+    except Exception as exc:
+        raise HTTPException(
+            status_code=503,
+            detail=f"Agent memory save error: {exc}",
+        )
+
+    return AgentResponse(
+        user_id=request.user_id,
+        parsed_query=parsed_query,
+        answer=answer,
+        raw_text=raw,
+        context={
+            "database": database_context,
+            "user": user_context,
+            "memory": {
+                "session_id": _session_key(request.session_id),
+                "previous_answers": answer_memory,
+                "last_answers": updated_answer_memory,
+            },
+        },
+    )
 
 
 @app.get("/health")
