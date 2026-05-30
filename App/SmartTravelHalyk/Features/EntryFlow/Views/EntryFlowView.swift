@@ -35,7 +35,6 @@ struct EntryFlowView: View {
         .contentMargins(16, for: .scrollContent)
         .safeAreaInset(edge: .bottom) {
             VStack {
-                // TODO: Hide if chatbot input is focused with animation blurreplace
                 FeedSegmentBar(viewModel: self.viewModel)
                     .contentMargins(.horizontal, 16, for: .scrollContent)
 
@@ -103,139 +102,6 @@ private struct FeedSegmentChip: View {
     }
 }
 
-private struct ManualSearchView: View {
-    @Bindable var viewModel: EntryFlowViewModel
-
-    var body: some View {
-        VStack(spacing: 12) {
-            HStack(spacing: 12) {
-                Image(systemName: "magnifyingglass")
-                    .font(.title2.weight(.semibold))
-                    .foregroundStyle(.secondary)
-
-                TextField("Destination or hotel", text: self.$viewModel.manualSearchText)
-                    .textInputAutocapitalization(.words)
-                    .submitLabel(.search)
-                    .onSubmit(self.viewModel.submitManualSearch)
-            }
-            .padding(.horizontal, 18)
-            .frame(height: 60)
-            .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 20))
-
-            Menu {
-                ForEach(self.viewModel.dateWindows, id: \.self) { dateWindow in
-                    Button(dateWindow) {
-                        self.viewModel.dateWindow = dateWindow
-                    }
-                }
-            } label: {
-                ManualSearchRow(systemImage: "calendar", title: self.viewModel.dateWindow)
-            }
-            .buttonStyle(.plain)
-
-            Stepper(value: self.$viewModel.peopleCount, in: 1...6) {
-                ManualSearchRow(
-                    systemImage: "person.2.fill",
-                    title: self.viewModel.peopleCount == 1 ? "1 guest" : "\(self.viewModel.peopleCount) guests"
-                )
-            }
-
-            Button(action: self.viewModel.submitManualSearch) {
-                Text("Search")
-                    .font(.headline.weight(.semibold))
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 58)
-                    .foregroundStyle(.black)
-                    .background(.yellow, in: .rect(cornerRadius: 20))
-            }
-            .buttonStyle(.plain)
-        }
-    }
-}
-
-private struct ManualSearchRow: View {
-    let systemImage: String
-    let title: String
-
-    var body: some View {
-        HStack(spacing: 14) {
-            Image(systemName: self.systemImage)
-                .font(.title3.weight(.semibold))
-                .foregroundStyle(.secondary)
-                .frame(width: 28)
-
-            Text(self.title)
-                .font(.title3.weight(.medium))
-                .foregroundStyle(.primary)
-
-            Spacer()
-        }
-        .padding(.horizontal, 18)
-        .frame(height: 60)
-        .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 20))
-    }
-}
-
-private struct EntryFiltersView: View {
-    @Bindable var viewModel: EntryFlowViewModel
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Stepper(value: self.$viewModel.peopleCount, in: 1...6) {
-                MetricPill(title: "People", value: "\(self.viewModel.peopleCount)")
-            }
-
-            Picker("Budget", selection: self.$viewModel.selectedMode) {
-                ForEach(TripMode.allCases) { mode in
-                    Text(mode.title).tag(mode)
-                }
-            }
-            .pickerStyle(.segmented)
-
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 8) {
-                    Menu {
-                        ForEach(self.viewModel.dateWindows, id: \.self) { dateWindow in
-                            Button(dateWindow) {
-                                self.viewModel.dateWindow = dateWindow
-                            }
-                        }
-                    } label: {
-                        FilterChip(title: self.viewModel.dateWindow, systemImage: "calendar")
-                    }
-
-                    Menu {
-                        ForEach(self.viewModel.destinationFilters, id: \.self) { destination in
-                            Button(destination) {
-                                self.viewModel.selectedDestination = destination
-                            }
-                        }
-                    } label: {
-                        FilterChip(title: self.viewModel.selectedDestination, systemImage: "mappin.and.ellipse")
-                    }
-
-                    ForEach(self.viewModel.quickPreferences, id: \.self) { preference in
-                        Button {
-                            self.viewModel.selectedPreference = preference
-                        } label: {
-                            Text(preference)
-                                .font(.subheadline.weight(.semibold))
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 8)
-                                .foregroundStyle(self.viewModel.selectedPreference == preference ? .white : .primary)
-                                .background(
-                                    self.viewModel.selectedPreference == preference ? Color.green : Color(.secondarySystemGroupedBackground),
-                                    in: .capsule
-                                )
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
-            }
-        }
-    }
-}
-
 private struct ChatbotInputCapsule: View {
     @Bindable var viewModel: EntryFlowViewModel
 
@@ -267,19 +133,7 @@ private struct ChatbotInputCapsule: View {
     }
 }
 
-private struct FilterChip: View {
-    let title: String
-    let systemImage: String
 
-    var body: some View {
-        Label(self.title, systemImage: self.systemImage)
-            .font(.subheadline.weight(.semibold))
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            .foregroundStyle(.primary)
-            .background(Color(.secondarySystemGroupedBackground), in: .capsule)
-    }
-}
 
 private extension View {
     @ViewBuilder

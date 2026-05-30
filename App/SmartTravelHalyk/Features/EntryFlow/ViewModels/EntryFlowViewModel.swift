@@ -21,7 +21,7 @@ final class EntryFlowViewModel {
     var dateWindow = "Jun - Sep"
     var selectedPreference = "Food"
     var selectedDestination = "All"
-    var selectedFeedSegment: RecommendationFeedSegment = .forYou
+    var selectedFeedSegment: RecommendationFeedSegment = .similar
     var manualSearchText = ""
     var chatbotPrompt = ""
 
@@ -115,16 +115,14 @@ final class EntryFlowViewModel {
 
     private func matchesFeedSegment(_ segment: RecommendationFeedSegment, recommendation: TripRecommendation) -> Bool {
         switch segment {
-        case .forYou:
-            return true
+  
         case .similar:
             return recommendation.recommendationType == .similarToPrevious
         case .newStyle:
             return recommendation.recommendationType == .oppositeToPrevious
         case .seasonal:
             return recommendation.recommendationType == .seasonal || recommendation.recommendationType == .eventBased
-        case .cashback:
-            return recommendation.recommendationType == .cashbackBoosted
+     
         }
     }
 

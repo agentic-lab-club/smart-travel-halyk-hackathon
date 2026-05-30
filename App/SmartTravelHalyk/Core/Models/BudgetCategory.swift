@@ -14,3 +14,22 @@ enum BudgetCategory: String, Codable, CaseIterable {
     case buffer
     case cashbackDiscount = "cashback_discount"
 }
+
+extension BudgetCategory {
+    var icon: String {
+        switch self {
+        case .flights:            return "airplane"
+        case .hotels:             return "bed.double.fill"
+        case .localTransport:     return "bus.fill"
+        case .intercityTransport: return "train.side.front.car"
+        case .food:               return "fork.knife"
+        case .activities:         return "binoculars.fill"
+        case .events:             return "ticket.fill"
+        case .visa:               return "doc.badge.arrow.up"
+        case .insurance:          return "shield.fill"
+        case .souvenirs:          return "bag.fill"
+        case .buffer:             return "plus.circle.fill"
+        case .cashbackDiscount:   return "creditcard.fill"
+        }
+    }
+}

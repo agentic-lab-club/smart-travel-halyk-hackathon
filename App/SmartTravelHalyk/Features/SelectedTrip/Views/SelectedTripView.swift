@@ -21,20 +21,21 @@ struct SelectedTripView: View {
     @State private var selectedFlightForDetail: FlightPlan?
     @State private var showPurchase = false
 
-    private let heroHeight: CGFloat
+    private let heroAspectRatio: CGFloat
 
     init(trip: TripDetailsResponse) {
         _viewModel = State(initialValue: SelectedTripViewModel(trip: trip))
         if let img = UIImage(named: "ExampleTripImage") {
-            heroHeight = UIScreen.main.bounds.width * img.size.height / img.size.width
+            heroAspectRatio = img.size.height / img.size.width
         } else {
-            heroHeight = 300
+            heroAspectRatio = 3 / 4
         }
     }
 
     var body: some View {
         GeometryReader { proxy in
             let topInset = proxy.safeAreaInsets.top
+            let heroHeight = proxy.size.width * heroAspectRatio
 
             ScrollViewReader { scrollProxy in
                 ScrollView {

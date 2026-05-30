@@ -8,3 +8,9 @@ struct BudgetItem: Codable, Equatable, Identifiable {
     let category: BudgetCategory
     let title: String
 }
+
+extension BudgetItem {
+    var absDisplayString: String {
+        "\(Int(abs(amount)).formatted(.number.grouping(.automatic))) \(currency.rawValue)"
+    }
+}

@@ -3,12 +3,17 @@ import SwiftUI
 extension TripMode {
     var title: String {
         switch self {
-        case .economy:
-            return "Economy"
-        case .balanced:
-            return "Balanced"
-        case .comfort:
-            return "Comfort"
+        case .economy:  return "Economy"
+        case .balanced: return "Balanced"
+        case .comfort:  return "Comfort"
+        }
+    }
+
+    var fullTitle: String {
+        switch self {
+        case .economy:  return "Budget trip"
+        case .balanced: return "Balanced"
+        case .comfort:  return "Comfort"
         }
     }
 }
@@ -39,46 +44,38 @@ extension RecommendationType {
 extension RecommendationFeedSegment {
     var title: String {
         switch self {
-        case .forYou:
-            return "For You"
         case .similar:
             return "Similar"
         case .newStyle:
             return "New Style"
         case .seasonal:
             return "Seasonal"
-        case .cashback:
-            return "Cashback"
         }
     }
 
     var subtitle: String {
         switch self {
-        case .forYou:
-            return "Best overall matches from your profile, budget and card perks."
+
         case .similar:
             return "Trips close to what you already liked and paid for before."
         case .newStyle:
             return "Opposite picks when you want something outside your pattern."
         case .seasonal:
             return "Timely routes based on weather, events and best travel windows."
-        case .cashback:
-            return "Destinations where Halyk card value is strongest."
+
         }
     }
 
     var systemImage: String {
         switch self {
-        case .forYou:
-            return "sparkles"
+
         case .similar:
             return "heart.fill"
         case .newStyle:
             return "shuffle"
         case .seasonal:
             return "sun.max.fill"
-        case .cashback:
-            return "creditcard.fill"
+     
         }
     }
 }
@@ -97,6 +94,6 @@ extension EstimatedMoney {
 
 extension CashbackEstimate {
     var displayString: String {
-        "-\(percent.formatted(.number.precision(.fractionLength(0...1))))%"
+        "-\(percent.formatted(.number.precision(.fractionLength(0 ... 1))))%"
     }
 }
