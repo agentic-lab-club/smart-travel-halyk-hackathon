@@ -20,6 +20,9 @@ environment: "development"
 gotenberg:
   url: "http://localhost:3000"
 
+ai_agent:
+  url: "http://localhost:8000"
+
 # =========================
 # Modules and Services on internal/
 # =========================
