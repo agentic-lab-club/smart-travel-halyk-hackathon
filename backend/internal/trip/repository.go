@@ -112,8 +112,8 @@ func cloneTrip(src *Trip) *Trip {
 	cp.VibeLabels = append([]string{}, src.VibeLabels...)
 	cp.HotelPreferences = append([]string{}, src.HotelPreferences...)
 	cp.Interests = append([]string{}, src.Interests...)
-	cp.Travelers = append([]Traveler{}, src.Travelers...)
-	cp.TodoSections = append([]TodoSection{}, src.TodoSections...)
+	cp.Travelers = cloneTravelers(src.Travelers)
+	cp.TodoSections = cloneTodoSections(src.TodoSections)
 	cp.TransportOptions = append([]TransportOption{}, src.TransportOptions...)
 	cp.HotelOptions = append([]HotelOption{}, src.HotelOptions...)
 	cp.Activities = append([]ActivityItem{}, src.Activities...)
@@ -136,6 +136,61 @@ func cloneSession(src *ChatSession) *ChatSession {
 		return nil
 	}
 	cp := *src
-	cp.Messages = append([]ChatMessage{}, src.Messages...)
+	cp.Messages = cloneMessages(src.Messages)
 	return &cp
+}
+
+func cloneTravelers(src []Traveler) []Traveler {
+	if src == nil {
+		return nil
+	}
+	out := make([]Traveler, 0, len(src))
+	for _, traveler := range src {
+		cp := traveler
+		cp.Preferences = append([]string{}, traveler.Preferences...)
+		out = append(out, cp)
+	}
+	return out
+}
+
+func cloneTodoSections(src []TodoSection) []TodoSection {
+	if src == nil {
+		return nil
+	}
+	out := make([]TodoSection, 0, len(src))
+	for _, section := range src {
+		cp := section
+		cp.Items = append([]TodoItem{}, section.Items...)
+		out = append(out, cp)
+	}
+	return out
+}
+
+func cloneMessages(src []ChatMessage) []ChatMessage {
+	if src == nil {
+		return nil
+	}
+	out := make([]ChatMessage, 0, len(src))
+	for _, message := range src {
+		cp := message
+		cp.Structured = cloneMap(cp.Structured)
+		out = append(out, cp)
+	}
+	return out
+}
+
+func cloneMap(src map[string]any) map[string]any {
+	if src == nil {
+		return nil
+	}
+	out := make(map[string]any, len(src))
+	for key, value := range src {
+		switch typed := value.(type) {
+		case []string:
+			out[key] = append([]string{}, typed...)
+		default:
+			out[key] = typed
+		}
+	}
+	return out
 }

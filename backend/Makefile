@@ -41,8 +41,7 @@ sh:
 # TODO: генерировать swagger outside docker (внутрь /docs как спека и коммитить его! в каждом изменений)
 # Swagger/OpenAPI-спека должна быть доступна вне контейнера (в репозитории или по URL).
 swagger:
-	@go install github.com/swaggo/swag/cmd/swag@v1.8.1
-	@swag init -g cmd/server/main.go
+	@powershell -NoProfile -Command "$$env:GOCACHE='$(CURDIR)\\.cache\\go-build'; $$env:GOMODCACHE='$(CURDIR)\\.cache\\gomod'; $$env:GOTELEMETRY='off'; go install github.com/swaggo/swag/cmd/swag@v1.8.1; $$env:PATH += ';' + (Join-Path $$env:USERPROFILE 'go\\bin'); swag init -g cmd/server/main.go; $$json = Get-Content 'docs/swagger.json' -Raw | ConvertFrom-Json; $$json.host = '127.0.0.1:8080'; $$json.schemes = @('http'); $$json | ConvertTo-Json -Depth 100 | Set-Content 'docs/swagger-local.json'; $$json = Get-Content 'docs/swagger.json' -Raw | ConvertFrom-Json; $$json.host = 'api-stage.yourdomain.com'; $$json.schemes = @('https','http'); $$json | ConvertTo-Json -Depth 100 | Set-Content 'docs/swagger-stage.json'; $$json = Get-Content 'docs/swagger.json' -Raw | ConvertFrom-Json; $$json.host = 'api.yourdomain.com'; $$json.schemes = @('https'); $$json | ConvertTo-Json -Depth 100 | Set-Content 'docs/swagger-prod.json'"
 
 #psql:
 #	@docker compose -f $(NAMED_COMPOSE_FILE) exec -it $(DATABASE_SERVICE_NAME) psql -d directus_dev -U directus_dev

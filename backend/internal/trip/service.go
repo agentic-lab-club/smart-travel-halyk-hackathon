@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/agentic-lab-club/smart-travel-halyk-hackathon/backend/internal/seeder"
 	"github.com/agentic-lab-club/smart-travel-halyk-hackathon/backend/pkg/config"
 	"github.com/google/uuid"
 )
@@ -52,7 +51,7 @@ func (s *Service) PatchTrip(tripID uuid.UUID, dto PatchTripDTO) (*TripDetailsRes
 		trip.OriginCity = dto.OriginCity
 	}
 	if dto.DestinationCountry != "" {
-		trip.DestinationCountry = dto.DestinationCountry
+		trip.DestinationCountry = normalizeCountry(dto.DestinationCountry)
 	}
 	if dto.DestinationCity != "" {
 		trip.DestinationCity = dto.DestinationCity
@@ -357,203 +356,6 @@ func (s *Service) buildDetails(trip *Trip) *TripDetailsResponse {
 	}
 }
 
-func (s *Service) applyAIFields(trip *Trip, plan *AIPlanningResponse) {
-	if plan == nil {
-		return
-	}
-	trip.VibeLabels = append([]string{}, plan.VibeLabels...)
-	if value, ok := plan.NormalizedFields["origin_city"].(string); ok && value != "" {
-		trip.OriginCity = value
-	}
-	if value, ok := plan.NormalizedFields["destination_country"].(string); ok && value != "" {
-		trip.DestinationCountry = value
-	}
-	if value, ok := plan.NormalizedFields["destination_city"].(string); ok && value != "" {
-		trip.DestinationCity = value
-	}
-	if value, ok := plan.NormalizedFields["start_date"].(string); ok && value != "" {
-		trip.StartDate = value
-	}
-	if value, ok := plan.NormalizedFields["end_date"].(string); ok && value != "" {
-		trip.EndDate = value
-	}
-	if value, ok := plan.NormalizedFields["transport_type"].(string); ok && value != "" {
-		trip.TransportType = value
-	}
-	if value, ok := plan.NormalizedFields["trip_purpose"].(string); ok && value != "" {
-		trip.TripPurpose = value
-	}
-	if value, ok := plan.NormalizedFields["citizenship"].(string); ok && value != "" {
-		trip.Citizenship = value
-	}
-	switch value := plan.NormalizedFields["budget"].(type) {
-	case int:
-		if value > 0 {
-			trip.Budget = value
-		}
-	case float64:
-		if value > 0 {
-			trip.Budget = int(value)
-		}
-	}
-	if trip.Budget == 0 {
-		trip.Budget = 750000
-	}
-	if trip.OriginCity == "" {
-		trip.OriginCity = "Almaty"
-	}
-	if trip.DestinationCountry == "" {
-		trip.DestinationCountry = "Turkey"
-	}
-	if trip.DestinationCity == "" {
-		trip.DestinationCity = "Istanbul"
-	}
-	if trip.StartDate == "" {
-		trip.StartDate = "2026-07-10"
-	}
-	if trip.EndDate == "" {
-		trip.EndDate = "2026-07-17"
-	}
-	if trip.TransportType == "" {
-		trip.TransportType = "flight"
-	}
-	if trip.TripPurpose == "" {
-		trip.TripPurpose = "family"
-	}
-	if trip.Citizenship == "" {
-		trip.Citizenship = "Kazakhstan"
-	}
-}
-
-func (s *Service) enrichTripFromSeed(trip *Trip) {
-	seed := seeder.BuildDestinationSeed(trip.DestinationCountry, trip.OriginCity, trip.TransportType)
-	trip.DestinationCountry = seed.Country
-	if trip.DestinationCity == "" {
-		trip.DestinationCity = seed.City
-	}
-	trip.TransportOptions = make([]TransportOption, 0, len(seed.Transport))
-	for _, option := range seed.Transport {
-		trip.TransportOptions = append(trip.TransportOptions, TransportOption{
-			ID:          uuid.New(),
-			Mode:        option.Mode,
-			Provider:    option.Provider,
-			Title:       option.Title,
-			Origin:      option.Origin,
-			Destination: option.Destination,
-			Departure:   option.Departure,
-			Arrival:     option.Arrival,
-			Price:       option.Price,
-			Currency:    option.Currency,
-			Description: option.Description,
-		})
-	}
-	if len(trip.TransportOptions) > 0 {
-		trip.TransportOptions[0].Selected = true
-		selected := trip.TransportOptions[0]
-		trip.SelectedTransport = &selected
-	}
-	trip.HotelOptions = make([]HotelOption, 0, len(seed.Hotels))
-	for _, option := range seed.Hotels {
-		trip.HotelOptions = append(trip.HotelOptions, HotelOption{
-			ID:          uuid.New(),
-			Provider:    option.Provider,
-			Name:        option.Name,
-			Location:    option.Location,
-			Price:       option.Price,
-			Currency:    option.Currency,
-			Rating:      option.Rating,
-			Description: option.Description,
-			ReviewLink:  option.ReviewLink,
-		})
-	}
-	if len(trip.HotelOptions) > 0 {
-		trip.HotelOptions[0].Selected = true
-		selected := trip.HotelOptions[0]
-		trip.SelectedHotel = &selected
-	}
-	trip.Activities = make([]ActivityItem, 0, len(seed.Activities))
-	for _, item := range seed.Activities {
-		trip.Activities = append(trip.Activities, ActivityItem{
-			ID:          uuid.New(),
-			Kind:        item.Kind,
-			Title:       item.Title,
-			Location:    item.Location,
-			DayLabel:    item.DayLabel,
-			Price:       item.Price,
-			Currency:    item.Currency,
-			SourceName:  item.SourceName,
-			SourceLink:  item.SourceLink,
-			Description: item.Description,
-		})
-	}
-	trip.VisaInfo = VisaInfo{
-		Country:         seed.Visa.Country,
-		Requirement:     seed.Visa.Requirement,
-		RecommendedLead: seed.Visa.RecommendedLead,
-		Checklist:       append([]string{}, seed.Visa.Checklist...),
-		Notes:           seed.Visa.Notes,
-	}
-	trip.ReviewSummaries = make([]ReviewSummary, 0, len(seed.Reviews))
-	for _, item := range seed.Reviews {
-		trip.ReviewSummaries = append(trip.ReviewSummaries, ReviewSummary{
-			ID:         uuid.New(),
-			Kind:       item.Kind,
-			TargetName: item.TargetName,
-			Summary:    item.Summary,
-			SourceName: item.SourceName,
-			SourceLink: item.SourceLink,
-		})
-	}
-	trip.BudgetSummary = BudgetSummary{
-		TransportTotal:          selectedTransportPrice(trip),
-		HotelTotal:              selectedHotelPrice(trip),
-		EventsTotal:             activitiesTotal(trip.Activities),
-		EstimatedFoodTotal:      seed.FoodEstimate,
-		EstimatedLocalTransport: seed.LocalTransport,
-		InsuranceEstimate:       seed.InsuranceEstimate,
-		Currency:                "KZT",
-	}
-	s.recalculateBudget(trip)
-	s.rebuildTodoSections(trip)
-}
-
-func (s *Service) rebuildTodoSections(trip *Trip) {
-	transportItems := []TodoItem{}
-	if trip.SelectedTransport != nil {
-		transportItems = append(transportItems, TodoItem{ID: trip.SelectedTransport.ID, Kind: "transport", Title: trip.SelectedTransport.Title, Description: trip.SelectedTransport.Description, Status: "selected", Price: trip.SelectedTransport.Price})
-	}
-	hotelItems := []TodoItem{}
-	if trip.SelectedHotel != nil {
-		hotelItems = append(hotelItems, TodoItem{ID: trip.SelectedHotel.ID, Kind: "hotel", Title: trip.SelectedHotel.Name, Description: trip.SelectedHotel.Description, Status: "selected", Price: trip.SelectedHotel.Price, Link: trip.SelectedHotel.ReviewLink})
-	}
-	activityItems := make([]TodoItem, 0, len(trip.Activities))
-	for _, activity := range trip.Activities {
-		activityItems = append(activityItems, TodoItem{ID: activity.ID, Kind: activity.Kind, Title: activity.Title, Description: activity.Description, Status: "planned", DayLabel: activity.DayLabel, Price: activity.Price, Link: activity.SourceLink})
-	}
-	trip.TodoSections = []TodoSection{
-		{ID: "transport", Title: "Transport", Items: transportItems},
-		{ID: "hotel", Title: "Hotel", Items: hotelItems},
-		{ID: "activities", Title: "Places and Events", Items: activityItems},
-		{ID: "trip-info", Title: "Trip Essentials", Items: []TodoItem{{ID: uuid.New(), Kind: "visa", Title: "Visa and documents", Description: trip.VisaInfo.Requirement, Status: "check"}}},
-	}
-}
-
-func (s *Service) recalculateBudget(trip *Trip) {
-	trip.BudgetSummary.TransportTotal = selectedTransportPrice(trip)
-	trip.BudgetSummary.HotelTotal = selectedHotelPrice(trip)
-	trip.BudgetSummary.EventsTotal = activitiesTotal(trip.Activities)
-	trip.BudgetSummary.GrandTotal = trip.BudgetSummary.TransportTotal + trip.BudgetSummary.HotelTotal + trip.BudgetSummary.EventsTotal + trip.BudgetSummary.EstimatedFoodTotal + trip.BudgetSummary.EstimatedLocalTransport + trip.BudgetSummary.InsuranceEstimate
-	trip.BudgetSummary.CashbackAmount = int(float64(trip.BudgetSummary.GrandTotal) * 0.05)
-	trip.BudgetSummary.BonusAmount = int(float64(trip.BudgetSummary.GrandTotal) * 0.02)
-	trip.BudgetSummary.HalykOfferLabel = "Pay fully with Halyk mock card and unlock cashback"
-	trip.Offers = OfferSummary{
-		CashbackAmount: trip.BudgetSummary.CashbackAmount,
-		BonusAmount:    trip.BudgetSummary.BonusAmount,
-		HalykOffer:     trip.BudgetSummary.HalykOfferLabel,
-		Highlights:     []string{"Mock cashback applied on full Halyk payment", "Bonus estimate included for pitch and UI", "Kino.kz suggestions included where relevant"},
-	}
-}
-
 func tripToMap(trip *Trip) map[string]any {
 	return map[string]any{
 		"title":               trip.Title,
@@ -576,26 +378,4 @@ func normalizeAction(value, fallback string) string {
 		return fallback
 	}
 	return trimmed
-}
-
-func selectedTransportPrice(trip *Trip) int {
-	if trip.SelectedTransport == nil {
-		return 0
-	}
-	return trip.SelectedTransport.Price
-}
-
-func selectedHotelPrice(trip *Trip) int {
-	if trip.SelectedHotel == nil {
-		return 0
-	}
-	return trip.SelectedHotel.Price
-}
-
-func activitiesTotal(items []ActivityItem) int {
-	total := 0
-	for _, item := range items {
-		total += item.Price
-	}
-	return total
 }

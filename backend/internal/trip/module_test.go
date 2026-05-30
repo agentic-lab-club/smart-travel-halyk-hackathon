@@ -27,7 +27,7 @@ func TestTripFlowCreateChatConfirm(t *testing.T) {
 	}
 
 	chatResp := performJSONRequest(t, app, http.MethodPost, "/api/v1/trips/"+created.Trip.ID.String()+"/chat/messages", map[string]any{
-		"content": "Family trip to Turkey in July with budget 900000 and kids",
+		"content": "Family trip to Japan in July with budget 900000 and kids",
 		"action":  "collect_fields",
 	})
 	if chatResp.StatusCode != http.StatusOK {
