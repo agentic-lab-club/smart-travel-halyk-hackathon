@@ -32,7 +32,7 @@ Main modules:
 
 - `App/`: Mobile application on Swift.
 - `backend/`: Golang core backend service.
-- `AI_Agent/`: Python AI Chat service and separate FastAPI web server.
+- `agent/`: Python AI Chat service and separate FastAPI web server.
 - `docs/ai-sessions/`: stored AI chat sessions that may provide extended context, prior decisions, reasoning history, or implementation notes.
 - `docs/drafts`: our draft notes about our solution
 - `docs`: top level prio docs of documentation and solution
