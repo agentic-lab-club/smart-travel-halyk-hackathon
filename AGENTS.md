@@ -30,6 +30,8 @@ Before running module-specific commands such as Git operations, builds, tests, o
 
 Main modules:
 
+> for important files/folders References descriptions check the [REFERENCES.md](REFERENCES.md)
+
 - `App/`: Mobile application on Swift.
 - `backend/`: Golang core backend service.
 - `agent/`: Python AI Chat service and separate FastAPI web server.

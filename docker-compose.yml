@@ -35,7 +35,7 @@ services:
 
   # mobile frontend on Swift (/App)
   postgres:
-    image: postgres:16-alpine
+    image: postgres:17-alpine
     container_name: smarttravel_postgres
     ports:
       - "5432:5432"
@@ -63,7 +63,7 @@ services:
       dockerfile: Dockerfile
       target: runner
       args:
-        GEN_SWAGGER: "0"
+        GEN_SWAGGER: "1"
     container_name: smarttravel_backend
     env_file:
       - .env
@@ -97,7 +97,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile
       target: test
-    working_dir: /src
+    working_dir: /src/backend
     env_file:
       - .env
     volumes:
