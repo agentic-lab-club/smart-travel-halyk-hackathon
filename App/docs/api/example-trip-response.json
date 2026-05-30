@@ -1,0 +1,226 @@
+{
+  "tripId": "trip_jordan_001",
+  "title": "Jordan Highlights",
+  "subtitle": "Amman → Wadi Rum → Petra → Dead Sea → Amman",
+  "startDate": "2026-05-01",
+  "endDate": "2026-05-09",
+  "durationDays": 9,
+  "peopleCount": 2,
+  "currency": "KZT",
+  "selectedMode": "balanced",
+  "availableModes": [
+    "economy",
+    "balanced",
+    "comfort"
+  ],
+  "summary": {
+    "estimatedTotalCost": {
+      "amount": 920000,
+      "currency": "KZT"
+    },
+    "estimatedTotalCashback": {
+      "amount": 64000,
+      "currency": "KZT"
+    },
+    "weatherSummary": "Тёплая погода, 27–33°C",
+    "visaStatus": "visa_on_arrival",
+    "mainLabels": [
+      "Multi-city route",
+      "Culture + nature",
+      "Car recommended"
+    ]
+  },
+  "routeNavigator": [
+    {
+      "stopId": "stop_1",
+      "title": "Amman",
+      "startDate": "2026-05-01",
+      "endDate": "2026-05-03",
+      "transportToNext": "rental_car"
+    },
+    {
+      "stopId": "stop_2",
+      "title": "Petra",
+      "startDate": "2026-05-03",
+      "endDate": "2026-05-05",
+      "transportToNext": "rental_car"
+    }
+  ],
+  "map": {
+    "initialCamera": {
+      "centerLat": 31.9539,
+      "centerLng": 35.9106,
+      "zoom": 8
+    },
+    "markers": [
+      {
+        "markerId": "marker_airport_amm",
+        "segmentId": "seg_arrival_001",
+        "type": "airport",
+        "title": "Queen Alia International Airport",
+        "lat": 31.7226,
+        "lng": 35.9932
+      },
+      {
+        "markerId": "marker_hotel_001",
+        "segmentId": "seg_hotel_001",
+        "type": "hotel",
+        "title": "Four Seasons Hotel Amman",
+        "lat": 31.9454,
+        "lng": 35.8802
+      }
+    ],
+    "routes": [
+      {
+        "routeId": "route_airport_hotel",
+        "fromMarkerId": "marker_airport_amm",
+        "toMarkerId": "marker_hotel_001",
+        "segmentId": "seg_transfer_001",
+        "transportType": "taxi",
+        "distanceKm": 36.4,
+        "durationMinutes": 45,
+        "estimatedCost": {
+          "amount": 9000,
+          "currency": "KZT"
+        },
+        "alternativeRoutes": [
+          {
+            "transportType": "public_transport",
+            "durationMinutes": 70,
+            "estimatedCost": {
+              "amount": 900,
+              "currency": "KZT"
+            },
+            "reason": "Дешевле, но дольше"
+          }
+        ]
+      }
+    ]
+  },
+  "segments": [
+    {
+      "segmentId": "seg_arrival_001",
+      "type": "arrival",
+      "title": "Arrival in Amman",
+      "date": "2026-05-01",
+      "dayNumber": 1,
+      "startTime": "14:20",
+      "icon": "flight",
+      "status": "planned",
+      "linkedMarkerIds": [
+        "marker_airport_amm"
+      ],
+      "linkedRouteIds": [],
+      "price": null,
+      "labels": [
+        "1 stop",
+        "Economy class"
+      ],
+      "details": {
+        "flight": {
+          "fromAirport": "BER",
+          "toAirport": "AMM",
+          "durationMinutes": 410,
+          "stops": 1,
+          "cabinClass": "economy"
+        }
+      }
+    },
+    {
+      "segmentId": "seg_hotel_001",
+      "type": "check_in",
+      "title": "Check-in: Four Seasons Hotel Amman",
+      "date": "2026-05-01",
+      "dayNumber": 1,
+      "icon": "hotel",
+      "status": "selected",
+      "linkedMarkerIds": [
+        "marker_hotel_001"
+      ],
+      "linkedRouteIds": [
+        "route_airport_hotel"
+      ],
+      "price": {
+        "amount": 124000,
+        "currency": "KZT"
+      },
+      "labels": [
+        "9.1 Excellent",
+        "Выбран Deluxe Room",
+        "Завтрак включён"
+      ],
+      "details": {
+        "hotelId": "hotel_001",
+        "selectedRoomId": "room_balanced_001",
+        "ratingLabel": "9.1 Excellent",
+        "reviewShortSummary": "Гости хвалят сервис, чистоту и расположение. Минусы — дорогой завтрак и шум у дороги.",
+        "downgradeLabel": "Сэкономить 20 000 ₸",
+        "upgradeLabel": "Апгрейд за +54 000 ₸"
+      }
+    }
+  ],
+  "budget": {
+    "total": {
+      "amount": 920000,
+      "currency": "KZT",
+      "confidence": "medium"
+    },
+    "items": [
+      {
+        "category": "flights",
+        "title": "Flights",
+        "amount": 300000,
+        "currency": "KZT"
+      },
+      {
+        "category": "hotels",
+        "title": "Hotels",
+        "amount": 310000,
+        "currency": "KZT"
+      }
+    ]
+  },
+  "modeVariants": {
+    "economy": {
+      "totalCost": 760000,
+      "hotelStrategy": "farther_but_cheaper",
+      "transportStrategy": "public_transport_first",
+      "estimatedTravelTimeMinutes": 920,
+      "savingsComparedToBalanced": 160000,
+      "tradeoffLabel": "Дешевле, но больше времени в дороге"
+    },
+    "balanced": {
+      "totalCost": 920000,
+      "hotelStrategy": "balanced_location_price",
+      "transportStrategy": "mixed",
+      "estimatedTravelTimeMinutes": 720,
+      "tradeoffLabel": "Баланс цены и удобства"
+    },
+    "comfort": {
+      "totalCost": 1180000,
+      "hotelStrategy": "closer_to_activities",
+      "transportStrategy": "taxi_and_direct_routes",
+      "estimatedTravelTimeMinutes": 540,
+      "extraCostComparedToBalanced": 260000,
+      "tradeoffLabel": "Дороже, но меньше дороги и пересадок"
+    }
+  },
+  "cashback": {
+    "estimatedTotal": {
+      "amount": 64000,
+      "currency": "KZT"
+    },
+    "basePercent": 3,
+    "boostedPercent": 7,
+    "items": []
+  },
+  "challenges": [],
+  "warnings": [
+    {
+      "type": "airport_far_from_hotel",
+      "severity": "low",
+      "segmentId": "seg_transfer_001",
+      "message": "Аэропорт далеко от отеля: такси ≈ 9 000 ₸, 45 минут."
+    }
+  ]
+}
