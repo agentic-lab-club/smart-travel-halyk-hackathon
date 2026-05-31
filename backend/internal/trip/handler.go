@@ -18,12 +18,12 @@ func NewHandler(service *Service) *Handler {
 
 // CreateTrip godoc
 // @Summary Create trip draft
-// @Description Creates a new trip draft and initializes chat session state.
+// @Description Creates a new trip draft and returns the planning state (tripId + status).
 // @Tags @trip
 // @Accept json
 // @Produce json
 // @Param request body CreateTripDTO true "Trip draft payload"
-// @Success 201 {object} TripDetailsResponse
+// @Success 201 {object} PlanningResponse
 // @Failure 400 {object} map[string]interface{}
 // @Failure 500 {object} map[string]interface{}
 // @Router /api/v1/trips [post]
@@ -34,40 +34,58 @@ func (h *Handler) CreateTrip(c fiber.Ctx) error {
 	if err != nil {
 		return respond.ErrorStatus(c, err, fiber.StatusInternalServerError)
 	}
-	return respond.Created(c, data, nil)
+	planning := PlanningResponse{
+		TripID:               data.Trip.ID.String(),
+		Status:               data.Trip.Status,
+		MissingFields:        requiredMissing(tripToMap(&data.Trip)),
+		ReadyForConfirmation: data.Trip.Status == StatusReadyForConfirmation,
+	}
+	return respond.Created(c, planning, nil)
 }
 
 // GetTrip godoc
-// @Summary Get trip details
-// @Description Returns the aggregate trip response for dashboard rendering.
+// @Summary Get trip mobile bundle
+// @Description Returns the mobile-compatible trip bundle for dashboard rendering.
 // @Tags @trip
 // @Produce json
 // @Param tripId path string true "Trip ID"
-// @Success 200 {object} TripDetailsResponse
+// @Success 200 {object} MobileTripBundle
 // @Failure 404 {object} map[string]interface{}
 // @Failure 500 {object} map[string]interface{}
 // @Router /api/v1/trips/{tripId} [get]
 func (h *Handler) GetTrip(c fiber.Ctx) error {
 	data, err := h.service.GetTrip(c.Locals("tripId").(uuid.UUID))
-	return h.tripDetails(c, data, err)
+	return h.mobileBundle(c, data, err)
 }
 
 // PatchTrip godoc
 // @Summary Update trip draft fields
-// @Description Updates trip-level fields collected before confirmation and generation.
+// @Description Updates trip-level fields and returns the updated planning state.
 // @Tags @trip
 // @Accept json
 // @Produce json
 // @Param tripId path string true "Trip ID"
 // @Param request body PatchTripDTO true "Trip patch payload"
-// @Success 200 {object} TripDetailsResponse
+// @Success 200 {object} PlanningResponse
 // @Failure 400 {object} map[string]interface{}
 // @Failure 404 {object} map[string]interface{}
 // @Failure 500 {object} map[string]interface{}
 // @Router /api/v1/trips/{tripId} [patch]
 func (h *Handler) PatchTrip(c fiber.Ctx) error {
 	data, err := h.service.PatchTrip(c.Locals("tripId").(uuid.UUID), c.Locals("body").(PatchTripDTO))
-	return h.tripDetails(c, data, err)
+	if err != nil {
+		return respond.ErrorStatus(c, err, fiber.StatusInternalServerError)
+	}
+	if data == nil {
+		return respond.WithStatus(c, fiber.Map{"error": "not found"}, nil, fiber.StatusNotFound)
+	}
+	planning := PlanningResponse{
+		TripID:               data.Trip.ID.String(),
+		Status:               data.Trip.Status,
+		MissingFields:        requiredMissing(tripToMap(&data.Trip)),
+		ReadyForConfirmation: data.Trip.Status == StatusReadyForConfirmation,
+	}
+	return respond.OK(c, planning, nil)
 }
 
 // AddChatMessage godoc
@@ -117,32 +135,32 @@ func (h *Handler) GetChatMessages(c fiber.Ctx) error {
 
 // ConfirmTrip godoc
 // @Summary Confirm trip and generate plan
-// @Description Confirms collected fields and generates the master-plan dashboard response.
+// @Description Confirms collected fields and generates the mobile-compatible trip bundle.
 // @Tags @trip
 // @Produce json
 // @Param tripId path string true "Trip ID"
-// @Success 200 {object} TripDetailsResponse
+// @Success 200 {object} MobileTripBundle
 // @Failure 404 {object} map[string]interface{}
 // @Failure 500 {object} map[string]interface{}
 // @Router /api/v1/trips/{tripId}/confirm [post]
 func (h *Handler) ConfirmTrip(c fiber.Ctx) error {
 	data, err := h.service.ConfirmTrip(c.Context(), c.Locals("tripId").(uuid.UUID))
-	return h.tripDetails(c, data, err)
+	return h.mobileBundle(c, data, err)
 }
 
 // RegenerateTrip godoc
 // @Summary Regenerate trip plan
-// @Description Regenerates trip details from current stored state and chat context.
+// @Description Regenerates the mobile-compatible trip bundle from current stored state.
 // @Tags @trip
 // @Produce json
 // @Param tripId path string true "Trip ID"
-// @Success 200 {object} TripDetailsResponse
+// @Success 200 {object} MobileTripBundle
 // @Failure 404 {object} map[string]interface{}
 // @Failure 500 {object} map[string]interface{}
 // @Router /api/v1/trips/{tripId}/regenerate [post]
 func (h *Handler) RegenerateTrip(c fiber.Ctx) error {
 	data, err := h.service.RegenerateTrip(c.Context(), c.Locals("tripId").(uuid.UUID))
-	return h.tripDetails(c, data, err)
+	return h.mobileBundle(c, data, err)
 }
 
 // GetTransportOptions godoc
@@ -179,7 +197,7 @@ func (h *Handler) GetTransportOptions(c fiber.Ctx) error {
 // @Router /api/v1/trips/{tripId}/options/transport/{optionId}/select [post]
 func (h *Handler) SelectTransport(c fiber.Ctx) error {
 	data, err := h.service.SelectTransport(c.Locals("tripId").(uuid.UUID), c.Locals("optionId").(uuid.UUID))
-	return h.tripDetails(c, data, err)
+	return h.mobileBundle(c, data, err)
 }
 
 // GetHotelOptions godoc
@@ -216,7 +234,7 @@ func (h *Handler) GetHotelOptions(c fiber.Ctx) error {
 // @Router /api/v1/trips/{tripId}/options/hotels/{optionId}/select [post]
 func (h *Handler) SelectHotel(c fiber.Ctx) error {
 	data, err := h.service.SelectHotel(c.Locals("tripId").(uuid.UUID), c.Locals("optionId").(uuid.UUID))
-	return h.tripDetails(c, data, err)
+	return h.mobileBundle(c, data, err)
 }
 
 // AddActivity godoc
@@ -234,7 +252,7 @@ func (h *Handler) SelectHotel(c fiber.Ctx) error {
 // @Router /api/v1/trips/{tripId}/activities [post]
 func (h *Handler) AddActivity(c fiber.Ctx) error {
 	data, err := h.service.AddActivity(c.Locals("tripId").(uuid.UUID), c.Locals("body").(ManualActivityDTO))
-	return h.tripDetails(c, data, err)
+	return h.mobileBundle(c, data, err)
 }
 
 // GetBudget godoc
@@ -300,12 +318,14 @@ func (h *Handler) GetReviews(c fiber.Ctx) error {
 	return respond.OK(c, data, nil)
 }
 
-func (h *Handler) tripDetails(c fiber.Ctx, data *TripDetailsResponse, err error) error {
+func (h *Handler) mobileBundle(c fiber.Ctx, data *TripDetailsResponse, err error) error {
 	if err != nil {
 		return respond.ErrorStatus(c, err, fiber.StatusInternalServerError)
 	}
 	if data == nil {
 		return respond.WithStatus(c, fiber.Map{"error": "not found"}, nil, fiber.StatusNotFound)
 	}
-	return respond.OK(c, data, nil)
+	bundle := buildMobileBundle(&data.Trip)
+	return respond.OK(c, bundle, nil)
 }
+

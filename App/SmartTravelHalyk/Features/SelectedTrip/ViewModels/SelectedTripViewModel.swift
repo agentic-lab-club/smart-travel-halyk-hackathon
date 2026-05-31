@@ -31,7 +31,7 @@ final class SelectedTripViewModel {
 
     var currentTradeoffLabel: String? { currentModeVariant?.tradeoffLabel }
 
-    var effectiveBudget: BudgetBreakdown { MockTravelData.budget(for: selectedMode) }
+    var effectiveBudget: BudgetBreakdown { trip.budget }
 
     /// City name from the first day-itinerary segment; falls back to trip title.
     var destinationCity: String {
@@ -61,9 +61,18 @@ final class SelectedTripViewModel {
         return h
     }
 
+    /// Async-loaded full hotel details. Falls back to the mock until a real load completes.
+    private(set) var loadedHotelFull: HotelDetailsFull?
+
     var hotelFullDetails: HotelDetailsFull? {
-        guard hotelDetails?.hotelId == MockTravelData.hotelDetailsFull.hotelId else { return nil }
-        return MockTravelData.hotelDetailsFull
+        loadedHotelFull ?? (hotelDetails != nil ? MockTravelData.hotelDetailsFull : nil)
+    }
+
+    func loadHotelDetails(apiClient: TravelAPIClient) async {
+        guard let hotelId = hotelDetails?.hotelId else { return }
+        if let full = try? await apiClient.fetchHotelDetails(hotelId: hotelId) {
+            loadedHotelFull = full
+        }
     }
 
     init(trip: TripDetailsResponse) {

@@ -11,7 +11,8 @@ struct RecommendationFeedPager: View {
 
             RecommendationFeedPage(
                 segment: viewModel.selectedFeedSegment,
-                recommendations: viewModel.filteredRecommendations
+                recommendations: viewModel.filteredRecommendations,
+                apiClient: viewModel.apiClient
             )
         }
         .navigationTitle(viewModel.selectedFeedSegment.title)
@@ -21,6 +22,7 @@ struct RecommendationFeedPager: View {
 private struct RecommendationFeedPage: View {
     let segment: RecommendationFeedSegment
     let recommendations: [TripRecommendation]
+    let apiClient: TravelAPIClient
 
     var body: some View {
         LazyVStack(spacing: 12) {
@@ -35,7 +37,7 @@ private struct RecommendationFeedPage: View {
             } else {
                 ForEach(recommendations) { recommendation in
                     NavigationLink {
-                        SelectedTripView(trip: MockTravelData.tripDetails)
+                        TripDetailLoaderView(tripId: recommendation.tripId, apiClient: apiClient)
                     } label: {
                         RecommendationCard(recommendation: recommendation)
                             .contentShape(RoundedRectangle(cornerRadius: 16, style: .continuous))

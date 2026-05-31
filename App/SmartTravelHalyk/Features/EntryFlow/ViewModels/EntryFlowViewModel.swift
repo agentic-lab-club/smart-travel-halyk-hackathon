@@ -11,7 +11,19 @@ final class EntryFlowViewModel {
         case failed(String)
     }
 
-    private let apiClient: TravelAPIClient
+    enum PlanningState: Equatable {
+        case idle
+        case creating
+        case collecting
+        case readyToConfirm
+        case confirming
+        case confirmed
+        case failed(String)
+    }
+
+    let apiClient: TravelAPIClient
+
+    // MARK: - Discovery state
 
     var state: LoadState = .idle
     var profile: UserProfileResponse?
@@ -28,6 +40,30 @@ final class EntryFlowViewModel {
     let quickPreferences = ["Beach", "Mountains", "Culture", "Quiet", "Shopping", "Food"]
     let dateWindows = ["Jun - Sep", "Weekend", "Next month"]
     let feedSegments = RecommendationFeedSegment.allCases
+
+    // MARK: - Planning workflow state
+
+    var planningState: PlanningState = .idle
+    var activeTripId: String?
+    var planningMessages: [PlanningMessage] = []
+    var missingFields: [String] = []
+    var generatedTrip: TripDetailsResponse?
+
+    var isPlanning: Bool {
+        switch planningState {
+        case .idle, .confirmed, .failed: return false
+        default: return true
+        }
+    }
+
+    var canConfirm: Bool { planningState == .readyToConfirm }
+
+    var isShowingGeneratedTrip: Bool {
+        get { generatedTrip != nil }
+        set { if !newValue { generatedTrip = nil } }
+    }
+
+    // MARK: - Discovery helpers
 
     var destinationFilters: [String] {
         ["All"] + recommendations.map(\.destinationName).uniqued()
@@ -69,6 +105,8 @@ final class EntryFlowViewModel {
         return viewModel
     }
 
+    // MARK: - Discovery loading
+
     func load() async {
         guard state != .loading else { return }
 
@@ -90,10 +128,73 @@ final class EntryFlowViewModel {
         selectedDestination = "All"
     }
 
-    func submitChatbotPrompt() {
-        selectedPreference = chatbotPrompt.isEmpty ? selectedPreference : chatbotPrompt
+    // MARK: - Planning workflow
+
+    /// Submits the chatbot prompt to the backend planning workflow.
+    /// On first call: creates a new trip draft. On subsequent calls: appends to the existing session.
+    func submitChatbotPrompt() async {
+        let prompt = chatbotPrompt.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !prompt.isEmpty else { return }
         chatbotPrompt = ""
+
+        if activeTripId == nil {
+            await startPlanningSession(prompt: prompt)
+        } else {
+            await continuePlanning(prompt: prompt)
+        }
     }
+
+    private func startPlanningSession(prompt: String) async {
+        planningState = .creating
+        do {
+            let creation = try await apiClient.createTrip(title: prompt)
+            activeTripId = creation.tripId
+            await continuePlanning(prompt: prompt)
+        } catch {
+            planningState = .failed("Could not start planning session.")
+        }
+    }
+
+    private func continuePlanning(prompt: String) async {
+        guard let tripId = activeTripId else { return }
+        planningState = .collecting
+        do {
+            let response = try await apiClient.sendPlanningMessage(tripId: tripId, content: prompt)
+            planningMessages = response.messages
+            missingFields = response.missingFields
+            if response.missingFields.isEmpty {
+                planningState = .readyToConfirm
+            } else {
+                planningState = .collecting
+            }
+        } catch {
+            planningState = .failed("Could not send message.")
+        }
+    }
+
+    /// Explicitly confirms the trip and fetches the final generated bundle.
+    func confirmTrip() async {
+        guard let tripId = activeTripId else { return }
+        planningState = .confirming
+        do {
+            let trip = try await apiClient.confirmTrip(tripId: tripId)
+            generatedTrip = trip
+            planningState = .confirmed
+        } catch {
+            planningState = .failed("Could not generate trip plan.")
+        }
+    }
+
+    /// Resets planning state so the user can start a new session.
+    func resetPlanning() {
+        activeTripId = nil
+        planningMessages = []
+        missingFields = []
+        generatedTrip = nil
+        planningState = .idle
+    }
+
+    // MARK: - Private helpers
 
     private func apply(profile: UserProfileResponse, recommendations: RecommendationsResponse) {
         self.profile = profile
@@ -115,14 +216,12 @@ final class EntryFlowViewModel {
 
     private func matchesFeedSegment(_ segment: RecommendationFeedSegment, recommendation: TripRecommendation) -> Bool {
         switch segment {
-  
         case .similar:
             return recommendation.recommendationType == .similarToPrevious
         case .newStyle:
             return recommendation.recommendationType == .oppositeToPrevious
         case .seasonal:
             return recommendation.recommendationType == .seasonal || recommendation.recommendationType == .eventBased
-     
         }
     }
 

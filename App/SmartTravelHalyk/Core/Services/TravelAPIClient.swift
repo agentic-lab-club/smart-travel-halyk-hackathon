@@ -1,65 +1,161 @@
 import Foundation
 
-final class TravelAPIClient {
-    enum APIError: Error {
-        case missingBaseURL
-        case invalidResponse
-    }
+// MARK: - Error
 
-    private let baseURL: URL?
+enum APIError: Error, LocalizedError {
+    case invalidURL
+    case invalidResponse
+    case httpStatus(Int)
+    case decoding(Error)
+    case network(Error)
+
+    var errorDescription: String? {
+        switch self {
+        case .invalidURL:        return "Invalid request URL."
+        case .invalidResponse:   return "Unexpected server response."
+        case .httpStatus(let c): return "Server returned status \(c)."
+        case .decoding(let e):   return "Could not decode response: \(e.localizedDescription)"
+        case .network(let e):    return "Network error: \(e.localizedDescription)"
+        }
+    }
+}
+
+// MARK: - Client
+
+final class TravelAPIClient {
+
+    private let baseURL: URL
     private let session: URLSession
     private let decoder: JSONDecoder
-    private let useMockFallback: Bool
+    let useMockFallback: Bool
 
     init(
-        baseURL: URL? = nil,
+        baseURL: URL = APIConfig.baseURL,
         session: URLSession = .shared,
-        decoder: JSONDecoder = JSONDecoder(),
-        useMockFallback: Bool = true
+        useMockFallback: Bool = false
     ) {
         self.baseURL = baseURL
         self.session = session
-        self.decoder = decoder
         self.useMockFallback = useMockFallback
+
+        let d = JSONDecoder()
+        // Planning endpoints return snake_case; the mobile bundle uses camelCase.
+        // convertFromSnakeCase handles both: camelCase keys are unchanged,
+        // snake_case keys (like session_id, missing_fields) are converted.
+        d.keyDecodingStrategy = .convertFromSnakeCase
+        self.decoder = d
     }
 
-    static func mockingFallback(baseURL: URL? = nil) -> TravelAPIClient {
+    /// Client that always returns mock data without attempting network calls.
+    static func mockingFallback(baseURL: URL = APIConfig.baseURL) -> TravelAPIClient {
         TravelAPIClient(baseURL: baseURL, useMockFallback: true)
     }
 
+    // MARK: - Read Contracts
+
     func fetchUserProfile() async throws -> UserProfileResponse {
-        try await request(path: "user-profile", fallback: MockTravelData.userProfile)
+        try await get("user-profile", fallback: MockTravelData.userProfile)
     }
 
     func fetchRecommendations() async throws -> RecommendationsResponse {
-        try await request(path: "recommendations", fallback: MockTravelData.recommendations)
+        try await get("recommendations", fallback: MockTravelData.recommendations)
     }
 
     func fetchTripDetails(tripId: String) async throws -> TripDetailsResponse {
-        try await request(path: "trips/\(tripId)", fallback: MockTravelData.tripDetails)
+        try await get("trips/\(tripId)", fallback: MockTravelData.tripDetails)
     }
 
     func fetchHotelDetails(hotelId: String) async throws -> HotelDetailsFull {
-        try await request(path: "hotels/\(hotelId)", fallback: MockTravelData.hotelDetailsFull)
+        try await get("hotels/\(hotelId)", fallback: MockTravelData.hotelDetailsFull)
     }
 
-    private func request<Response: Decodable>(path: String, fallback: Response) async throws -> Response {
-        guard let baseURL else {
-            if useMockFallback { return fallback }
-            throw APIError.missingBaseURL
-        }
+    // MARK: - Planning Workflow Contracts
 
+    func createTrip(title: String) async throws -> PlanningTripResponse {
+        let body = CreateTripRequest(title: title)
+        return try await post("trips", body: body)
+    }
+
+    func sendPlanningMessage(tripId: String, content: String, action: String = "collect_fields") async throws -> PlanningChatResponse {
+        let body = ChatMessageRequest(content: content, action: action)
+        return try await post("trips/\(tripId)/chat/messages", body: body)
+    }
+
+    func confirmTrip(tripId: String) async throws -> TripDetailsResponse {
+        try await postEmpty("trips/\(tripId)/confirm", fallback: MockTravelData.tripDetails)
+    }
+
+    func regenerateTrip(tripId: String) async throws -> TripDetailsResponse {
+        try await postEmpty("trips/\(tripId)/regenerate", fallback: MockTravelData.tripDetails)
+    }
+
+    func getPlanningState(tripId: String) async throws -> PlanningChatResponse {
+        try await get("trips/\(tripId)/chat/messages")
+    }
+
+    // MARK: - Private helpers
+
+    private func url(for path: String) throws -> URL {
+        guard let url = URL(string: path, relativeTo: baseURL) else {
+            throw APIError.invalidURL
+        }
+        return url
+    }
+
+    private func get<T: Decodable>(_ path: String) async throws -> T {
+        let url = try url(for: path)
+        return try await execute(URLRequest(url: url))
+    }
+
+    private func get<T: Decodable>(_ path: String, fallback: T) async throws -> T {
+        if useMockFallback { return fallback }
+        let url = try url(for: path)
         do {
-            let url = baseURL.appending(path: path)
-            let (data, response) = try await session.data(from: url)
-            guard let httpResponse = response as? HTTPURLResponse,
-                  (200..<300).contains(httpResponse.statusCode) else {
-                throw APIError.invalidResponse
-            }
-            return try decoder.decode(Response.self, from: data)
+            return try await execute(URLRequest(url: url))
         } catch {
-            if useMockFallback { return fallback }
-            throw error
+            return fallback
+        }
+    }
+
+    private func post<Body: Encodable, Response: Decodable>(_ path: String, body: Body) async throws -> Response {
+        let url = try url(for: path)
+        var req = URLRequest(url: url)
+        req.httpMethod = "POST"
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.httpBody = try JSONEncoder().encode(body)
+        return try await execute(req)
+    }
+
+    private func postEmpty<T: Decodable>(_ path: String, fallback: T) async throws -> T {
+        if useMockFallback { return fallback }
+        let url = try url(for: path)
+        var req = URLRequest(url: url)
+        req.httpMethod = "POST"
+        do {
+            return try await execute(req)
+        } catch {
+            return fallback
+        }
+    }
+
+    private func execute<T: Decodable>(_ request: URLRequest) async throws -> T {
+        let data: Data
+        let response: URLResponse
+        do {
+            (data, response) = try await session.data(for: request)
+        } catch {
+            throw APIError.network(error)
+        }
+        guard let http = response as? HTTPURLResponse else {
+            throw APIError.invalidResponse
+        }
+        guard (200..<300).contains(http.statusCode) else {
+            throw APIError.httpStatus(http.statusCode)
+        }
+        do {
+            return try decoder.decode(T.self, from: data)
+        } catch {
+            throw APIError.decoding(error)
         }
     }
 }

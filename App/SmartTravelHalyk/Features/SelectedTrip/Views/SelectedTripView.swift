@@ -23,8 +23,11 @@ struct SelectedTripView: View {
 
     private let heroAspectRatio: CGFloat
 
-    init(trip: TripDetailsResponse) {
+    private let apiClient: TravelAPIClient
+
+    init(trip: TripDetailsResponse, apiClient: TravelAPIClient = TravelAPIClient()) {
         _viewModel = State(initialValue: SelectedTripViewModel(trip: trip))
+        self.apiClient = apiClient
         if let img = UIImage(named: "ExampleTripImage") {
             heroAspectRatio = img.size.height / img.size.width
         } else {
@@ -166,6 +169,7 @@ struct SelectedTripView: View {
             )
             .padding(.horizontal, 16)
             .padding(.bottom, 28)
+            .task { await viewModel.loadHotelDetails(apiClient: apiClient) }
         } else {
             ContentUnavailableView("No Hotel Booked", systemImage: "bed.double")
                 .padding(.top, 40)

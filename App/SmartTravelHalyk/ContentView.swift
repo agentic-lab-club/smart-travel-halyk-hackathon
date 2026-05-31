@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct ContentView: View {
-    @State private var entryViewModel = EntryFlowViewModel(apiClient: .mockingFallback())
+    @State private var entryViewModel = EntryFlowViewModel(apiClient: TravelAPIClient())
     @Environment(BookingService.self) private var bookingService
 
     var body: some View {
