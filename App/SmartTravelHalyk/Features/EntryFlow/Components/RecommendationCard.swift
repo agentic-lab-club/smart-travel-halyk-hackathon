@@ -44,9 +44,12 @@ struct RecommendationCard: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .frame(height: 450)
         .background {
-            Image("ExampleTripImage")
-                .scaledToFill()
-                .clipped()
+            UnsplashImageView(query: recommendation.destinationName.components(separatedBy: ",").first ?? recommendation.destinationName) {
+                Image("ExampleTripImage")
+                    .resizable()
+                    .scaledToFill()
+            }
+            .clipped()
         }
         .clipped()
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))

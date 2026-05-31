@@ -227,39 +227,26 @@ private struct PlanningSheet: View {
     private var bottomAction: some View {
         VStack(spacing: 0) {
             Divider().overlay(Color.white.opacity(0.1))
-            Group {
-                if viewModel.canConfirm {
-                    Button {
-                        Task { await viewModel.confirmTrip() }
-                    } label: {
-                        Label("Generate my trip plan", systemImage: "sparkles")
-                            .font(.subheadline.weight(.semibold))
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 16)
-                            .background(PSColor.accent, in: Capsule())
-                            .foregroundStyle(.black)
-                    }
-                    .buttonStyle(.plain)
-                    .padding(.horizontal, 20)
-                    .padding(.vertical, 12)
-                } else if !viewModel.missingFields.isEmpty {
-                    Button {
-                        Task { await viewModel.submitMissingFields() }
-                    } label: {
-                        Text("Save details")
-                            .font(.subheadline.weight(.semibold))
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 16)
-                            .background(PSColor.card, in: Capsule())
-                            .foregroundStyle(.white)
-                    }
-                    .buttonStyle(.plain)
-                    .padding(.horizontal, 20)
-                    .padding(.vertical, 12)
+            if viewModel.canConfirm || !viewModel.missingFields.isEmpty {
+                let ready = viewModel.canConfirm || viewModel.allMissingFieldsFilled
+                Button {
+                    Task { await viewModel.submitAndConfirm() }
+                } label: {
+                    Label("Generate my trip plan", systemImage: "sparkles")
+                        .font(.subheadline.weight(.semibold))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
+                        .background(ready ? PSColor.accent : PSColor.card, in: Capsule())
+                        .foregroundStyle(ready ? .black : .white.opacity(0.4))
                 }
+                .buttonStyle(.plain)
+                .disabled(!ready)
+                .padding(.horizontal, 20)
+                .padding(.vertical, 12)
+                .animation(.easeInOut(duration: 0.2), value: ready)
             }
-            .background(PSColor.bg)
         }
+        .background(PSColor.bg)
     }
 }
 
@@ -372,12 +359,20 @@ private struct FieldCard: View {
                 .tint(PSColor.accent)
                 .colorScheme(.dark)
             } else {
-                TextField(field.prompt, text: textBinding)
-                    .keyboardType(isBudget ? .numberPad : .default)
-                    .textInputAutocapitalization(isBudget ? .never : .words)
-                    .font(.body)
-                    .foregroundStyle(.white)
-                    .tint(PSColor.accent)
+                HStack(spacing: 8) {
+                    TextField(field.prompt, text: textBinding)
+                        .keyboardType(isBudget ? .numberPad : .default)
+                        .textInputAutocapitalization(isBudget ? .never : .words)
+                        .font(.body)
+                        .foregroundStyle(.white)
+                        .tint(PSColor.accent)
+
+                    if isBudget {
+                        Text("KZT")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(.white.opacity(0.45))
+                    }
+                }
             }
         }
         .padding(.horizontal, 16)

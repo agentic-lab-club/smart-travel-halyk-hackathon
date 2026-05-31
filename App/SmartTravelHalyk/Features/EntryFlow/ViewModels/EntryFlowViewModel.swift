@@ -60,6 +60,17 @@ final class EntryFlowViewModel {
 
     var canConfirm: Bool { planningState == .readyToConfirm }
 
+    var allMissingFieldsFilled: Bool {
+        missingFields.allSatisfy { field in
+            let value = (missingFieldInputs[field.key] ?? prefilledValue(for: field.key))
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            if field.key == "budget" {
+                return (Int(value) ?? 0) > 0
+            }
+            return !value.isEmpty
+        }
+    }
+
     var createdTrips: [TripDetailsResponse] = []
 
     var isShowingGeneratedTrip: Bool {
@@ -203,6 +214,15 @@ final class EntryFlowViewModel {
         } catch {
             planningState = .failed("Could not save trip details. \(error.localizedDescription)")
         }
+    }
+
+    /// Patches missing fields (if any) then immediately confirms the trip.
+    func submitAndConfirm() async {
+        if !missingFields.isEmpty {
+            await submitMissingFields()
+            guard case .readyToConfirm = planningState else { return }
+        }
+        await confirmTrip()
     }
 
     /// Explicitly confirms the trip and fetches the final generated bundle.
