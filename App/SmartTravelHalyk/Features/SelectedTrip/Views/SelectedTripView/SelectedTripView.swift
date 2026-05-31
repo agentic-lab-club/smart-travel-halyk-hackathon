@@ -27,6 +27,13 @@ struct FlightPlan: Identifiable {
             }
         }
 
+        var shortTitle: String {
+            switch self {
+            case .arrival: return "To"
+            case .departure: return "From"
+            }
+        }
+
         var icon: String {
             switch self {
             case .arrival: return "airplane.arrival"
@@ -118,7 +125,7 @@ struct SelectedTripView: View {
                                 .padding(.top, 12)
                                 .padding(.bottom, 14)
                                 .background(Color(.systemGroupedBackground))
-                                .offset(y: 50)
+                                .offset(y: 70)
                                 .zIndex(2)
                         }
 

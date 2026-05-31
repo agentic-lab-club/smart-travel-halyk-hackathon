@@ -13,6 +13,6 @@ struct FlightAirportBadge: View {
                 .font(.caption2)
                 .foregroundStyle(.secondary)
         }
-        .frame(minWidth: 48, alignment: .leading)
+        
     }
 }

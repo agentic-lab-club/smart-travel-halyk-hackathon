@@ -17,25 +17,14 @@ struct FlightRouteSummaryCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Flight plan")
-                        .font(.headline)
-                    Text(flights.count == 1 ? "One confirmed leg" : "Round trip with \(flights.count) legs")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
-
-                Spacer()
-
-                Image(systemName: "airplane.circle.fill")
-                    .font(.system(size: 34))
-                    .foregroundStyle(.green)
-            }
-
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 10) {
                     ForEach(flights) { plan in
+                        Text(plan.direction.shortTitle)
+                            .font(.caption)
+                            .foregroundStyle(.secondary.tertiary)
+                            .fontDesign(.monospaced)
+
                         FlightAirportBadge(code: plan.flight.fromAirport, label: FlightDisplay.shortDate(plan.flight.departureTime))
 
                         Image(systemName: "arrow.right")
@@ -43,12 +32,20 @@ struct FlightRouteSummaryCard: View {
                             .foregroundStyle(.secondary)
 
                         FlightAirportBadge(code: plan.flight.toAirport, label: FlightDisplay.shortDate(plan.flight.arrivalTime))
+
+                        if plan.id != flights.last?.id {
+                            Rectangle()
+                                .fill(Color(.separator))
+                                .frame(width: 1, height: 28)
+                                .padding(.horizontal, 6)
+                        }
                     }
                 }
             }
             .padding(10)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color(.tertiarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12))
+            .frame(height: 50)
+            .frame(maxWidth: .infinity, alignment: .center)
+            .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12))
 
             HStack(spacing: 10) {
                 FlightMetricPill(title: "Duration", value: totalDuration, icon: "clock.fill")
@@ -58,7 +55,5 @@ struct FlightRouteSummaryCard: View {
                 }
             }
         }
-        .padding(14)
-        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
     }
 }

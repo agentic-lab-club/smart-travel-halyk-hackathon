@@ -10,8 +10,9 @@ struct TripSectionHeader: View {
     }
 
     var body: some View {
-        HStack(alignment: .firstTextBaseline) {
-            Text(title).font(.title2.bold())
+        HStack(alignment: .center) {
+            Text(title)
+                .font(.title2.bold())
             Spacer()
             Text(subtitle)
                 .font(.caption)
