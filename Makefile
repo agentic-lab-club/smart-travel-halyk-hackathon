@@ -49,10 +49,16 @@ test-build-backend: ## Build the backend test image
 	@docker compose -f $(NAMED_COMPOSE_FILE) build $(BACKEND_TEST_SERVICE_NAME)
 
 test-backend-integration-build: ## Build backend integration test images in backend module
+	@echo Running backend integration image build via backend/Makefile
 	@$(MAKE) -C backend integration-test-build
 
 test-backend-integration: ## Run backend integration suite in backend module
+	@echo Running backend integration suite via backend/Makefile
 	@$(MAKE) -C backend integration-test
+
+test-backend-integration-all: ## Build and run backend integration suite
+	@$(MAKE) test-backend-integration-build
+	@$(MAKE) test-backend-integration
 
 sh:
 	@docker compose -f $(NAMED_COMPOSE_FILE) exec -it $(BACKEND_SERVICE_NAME) sh
@@ -65,4 +71,4 @@ swagger:
 #psql:
 #	@docker compose -f $(NAMED_COMPOSE_FILE) exec -it $(DATABASE_SERVICE_NAME) psql -d directus_dev -U directus_dev
 
-.PHONY: sent swagger-backend up down build logs rebuild sh swagger test test-all test-backend test-agent test-build test-build-backend test-backend-integration-build test-backend-integration yc-push-staging yc-push-prod yc-setup yc-list-images verify-build install-hooks
+.PHONY: sent swagger-backend up down build logs rebuild sh swagger test test-all test-backend test-agent test-build test-build-backend test-backend-integration-build test-backend-integration test-backend-integration-all yc-push-staging yc-push-prod yc-setup yc-list-images verify-build install-hooks
