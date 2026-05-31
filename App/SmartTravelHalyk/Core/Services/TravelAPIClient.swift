@@ -6,6 +6,7 @@ enum APIError: Error, LocalizedError {
     case invalidURL
     case invalidResponse
     case httpStatus(Int)
+    case emptyResponse(Int)
     case decoding(Error)
     case network(Error)
 
@@ -14,6 +15,7 @@ enum APIError: Error, LocalizedError {
         case .invalidURL:        return "Invalid request URL."
         case .invalidResponse:   return "Unexpected server response."
         case .httpStatus(let c): return "Server returned status \(c)."
+        case .emptyResponse(let c): return "Server returned an empty response (status \(c))."
         case .decoding(let e):   return "Could not decode response: \(e.localizedDescription)"
         case .network(let e):    return "Network error: \(e.localizedDescription)"
         }
@@ -165,9 +167,17 @@ final class TravelAPIClient {
         guard (200..<300).contains(http.statusCode) else {
             throw APIError.httpStatus(http.statusCode)
         }
+        guard !data.isEmpty else {
+            throw APIError.emptyResponse(http.statusCode)
+        }
         do {
             return try decoder.decode(T.self, from: data)
         } catch {
+            #if DEBUG
+            if let body = String(data: data, encoding: .utf8) {
+                print("[TravelAPIClient] Decode failed for \(request.httpMethod ?? "GET") \(request.url?.absoluteString ?? ""): \(body)")
+            }
+            #endif
             throw APIError.decoding(error)
         }
     }

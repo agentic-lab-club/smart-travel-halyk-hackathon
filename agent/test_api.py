@@ -2,7 +2,7 @@ import unittest
 
 from fastapi.testclient import TestClient
 
-from guide_models import AgentParsedQuery, AgentResponse
+from guide_models import AgentHistoryResponse, AgentParsedQuery, AgentResponse
 from main import create_app
 from planning_models import PlanningRequest, PlanningResponse
 
@@ -54,6 +54,9 @@ class FakeGuideService:
             raw_text="Tokyo is great for food and culture.",
             context={"database": {}, "user": {}, "memory": {"session_id": request.session_id}},
         )
+
+    def history(self, user_id: int, session_id: str):
+        return AgentHistoryResponse(user_id=user_id, session_id=session_id, messages=[])
 
 
 class APITests(unittest.TestCase):
@@ -111,6 +114,16 @@ class APITests(unittest.TestCase):
         self.assertEqual(payload["parsed_query"]["city"], "Tokyo")
         self.assertIn("answer", payload)
         self.assertIn("context", payload)
+
+    def test_agent_history_contract(self):
+        response = self.client.get(
+            "/agent/sessions/11111111-1111-1111-1111-111111111111/messages?user_id=42"
+        )
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload["user_id"], 42)
+        self.assertEqual(payload["session_id"], "11111111-1111-1111-1111-111111111111")
+        self.assertEqual(payload["messages"], [])
 
 
 if __name__ == "__main__":

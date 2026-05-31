@@ -1,10 +1,6 @@
 import Foundation
 import Observation
 
-// MARK: - API key
-// Replace with your actual Anthropic API key before demoing.
-private let kAnthropicAPIKey = "YOUR_ANTHROPIC_API_KEY"
-
 // MARK: - Domain types
 
 struct SuggestedPlace: Identifiable {
@@ -13,6 +9,27 @@ struct SuggestedPlace: Identifiable {
     let description: String
     let icon: String       // SF Symbol name
     let activityType: String
+}
+
+// MARK: - Backend agent request/response
+
+private struct AgentRequest: Encodable {
+    let inputText: String
+    let userId: Int
+    let sessionId: String
+}
+
+private struct AgentResponse: Decodable {
+    let answer: String
+}
+
+private struct AgentHistoryResponse: Decodable {
+    let messages: [AgentHistoryMessage]
+}
+
+private struct AgentHistoryMessage: Decodable {
+    let role: String
+    let content: String
 }
 
 // MARK: - Service
@@ -34,18 +51,68 @@ final class ClaudeChatService {
     private(set) var isLoading = false
     private(set) var error: String?
 
-    private let apiKey: String
+    private let userId = 1
+    private let sessionId: String
+    private let agentURL = APIConfig.agentURL
+    private let agentBaseURL = APIConfig.agentBaseURL
 
-    init(apiKey: String = kAnthropicAPIKey) {
-        self.apiKey = apiKey
+    private let encoder: JSONEncoder = {
+        let e = JSONEncoder()
+        e.keyEncodingStrategy = .convertToSnakeCase
+        return e
+    }()
+
+    private let decoder: JSONDecoder = {
+        let d = JSONDecoder()
+        d.keyDecodingStrategy = .convertFromSnakeCase
+        return d
+    }()
+
+    init(sessionId: String = UUID().uuidString) {
+        self.sessionId = Self.agentSessionId(for: sessionId)
+    }
+
+    // MARK: - Opener (shown as assistant message, no API call)
+
+    func addOpener(_ text: String) {
+        guard messages.isEmpty else { return }
+        messages.append(ChatMessage(role: .assistant, text: text))
+    }
+
+    func loadHistory(opener: String) async {
+        error = nil
+        isLoading = true
+        defer { isLoading = false }
+
+        do {
+            let historyURL = agentBaseURL
+                .appendingPathComponent("agent")
+                .appendingPathComponent("sessions")
+                .appendingPathComponent(sessionId)
+                .appendingPathComponent("messages")
+
+            var components = URLComponents(url: historyURL, resolvingAgainstBaseURL: false)
+            components?.queryItems = [URLQueryItem(name: "user_id", value: "\(userId)")]
+            guard let url = components?.url else {
+                addOpener(opener)
+                return
+            }
+
+            let (data, _) = try await URLSession.shared.data(from: url)
+            let response = try decoder.decode(AgentHistoryResponse.self, from: data)
+            messages = response.messages.compactMap(historyMessage)
+            addOpener(opener)
+        } catch {
+            addOpener(opener)
+            self.error = error.localizedDescription
+        }
     }
 
     // MARK: - Send
 
     func send(_ userText: String, systemPrompt: String) async {
         error = nil
-        let userMsg = ChatMessage(role: .user, text: userText)
-        messages.append(userMsg)
+        messages.append(ChatMessage(role: .user, text: userText))
 
         let assistantMsg = ChatMessage(role: .assistant, text: "")
         messages.append(assistantMsg)
@@ -54,38 +121,26 @@ final class ClaudeChatService {
         isLoading = true
         defer { isLoading = false }
 
+        // Embed the trip context and format instructions into the agent input.
+        let enrichedInput = """
+        \(systemPrompt)
+
+        User message: \(userText)
+        """
+
         do {
-            let requestBody = buildBody(systemPrompt: systemPrompt)
-            var req = URLRequest(url: URL(string: "https://api.anthropic.com/v1/messages")!)
+            let body = AgentRequest(inputText: enrichedInput, userId: userId, sessionId: sessionId)
+            var req = URLRequest(url: agentURL)
             req.httpMethod = "POST"
             req.setValue("application/json", forHTTPHeaderField: "Content-Type")
-            req.setValue(apiKey, forHTTPHeaderField: "x-api-key")
-            req.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
-            req.httpBody = try JSONSerialization.data(withJSONObject: requestBody)
+            req.httpBody = try encoder.encode(body)
 
-            let (bytes, _) = try await URLSession.shared.bytes(for: req)
+            let (data, _) = try await URLSession.shared.data(for: req)
+            let response = try decoder.decode(AgentResponse.self, from: data)
 
-            var accumulated = ""
-            for try await line in bytes.lines {
-                guard line.hasPrefix("data: ") else { continue }
-                let payload = String(line.dropFirst(6))
-                guard payload != "[DONE]",
-                      let data = payload.data(using: .utf8),
-                      let event = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-                      (event["type"] as? String) == "content_block_delta",
-                      let delta = event["delta"] as? [String: Any],
-                      let chunk = delta["text"] as? String else { continue }
-
-                accumulated += chunk
-                // Show raw text while streaming; strip <places> block live
-                messages[idx].text = stripPlacesBlock(from: accumulated)
-            }
-
-            // After stream ends, parse the places block
-            let parsed = parsePlaces(from: accumulated)
-            messages[idx].places = parsed
-            messages[idx].text = stripPlacesBlock(from: accumulated)
-
+            let raw = response.answer
+            messages[idx].places = parsePlaces(from: raw)
+            messages[idx].text = stripPlacesBlock(from: raw)
         } catch {
             messages[idx].text = "Something went wrong. Please try again."
             self.error = error.localizedDescription
@@ -94,19 +149,62 @@ final class ClaudeChatService {
 
     // MARK: - Helpers
 
-    private func buildBody(systemPrompt: String) -> [String: Any] {
-        // Include all messages except the last (empty assistant placeholder)
-        let history = messages.dropLast().map { msg -> [String: String] in
-            ["role": msg.role == .user ? "user" : "assistant",
-             "content": msg.text]
+    private func historyMessage(_ message: AgentHistoryMessage) -> ChatMessage? {
+        switch message.role {
+        case "user":
+            return ChatMessage(role: .user, text: displayUserText(from: message.content))
+        case "assistant":
+            return ChatMessage(
+                role: .assistant,
+                text: stripPlacesBlock(from: message.content),
+                places: parsePlaces(from: message.content)
+            )
+        default:
+            return nil
         }
-        return [
-            "model": "claude-sonnet-4-6",
-            "max_tokens": 1024,
-            "system": systemPrompt,
-            "stream": true,
-            "messages": history
-        ]
+    }
+
+    private func displayUserText(from storedText: String) -> String {
+        guard let range = storedText.range(of: "User message:") else {
+            return storedText.trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        return String(storedText[range.upperBound...]).trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private static func agentSessionId(for rawValue: String) -> String {
+        if let uuid = UUID(uuidString: rawValue) {
+            return uuid.uuidString
+        }
+
+        let bytes = Array(rawValue.utf8)
+        var high: UInt64 = 0xcbf29ce484222325
+        var low: UInt64 = 0x84222325cbf29ce4
+        for byte in bytes {
+            high ^= UInt64(byte)
+            high &*= 0x100000001b3
+            low ^= UInt64(byte) &+ 0x9e3779b97f4a7c15
+            low &*= 0x100000001b3
+        }
+
+        let uuidBytes: uuid_t = (
+            UInt8((high >> 56) & 0xff),
+            UInt8((high >> 48) & 0xff),
+            UInt8((high >> 40) & 0xff),
+            UInt8((high >> 32) & 0xff),
+            UInt8((high >> 24) & 0xff),
+            UInt8((high >> 16) & 0xff),
+            UInt8(((high >> 8) & 0x0f) | 0x50),
+            UInt8(high & 0xff),
+            UInt8(((low >> 56) & 0x3f) | 0x80),
+            UInt8((low >> 48) & 0xff),
+            UInt8((low >> 40) & 0xff),
+            UInt8((low >> 32) & 0xff),
+            UInt8((low >> 24) & 0xff),
+            UInt8((low >> 16) & 0xff),
+            UInt8((low >> 8) & 0xff),
+            UInt8(low & 0xff)
+        )
+        return UUID(uuid: uuidBytes).uuidString
     }
 
     private func stripPlacesBlock(from text: String) -> String {

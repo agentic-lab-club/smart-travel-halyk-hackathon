@@ -125,7 +125,7 @@ private struct TimelineIndicator: View {
                         Circle().stroke(isSelected ? Color.green : Color(.separator), lineWidth: 1.5)
                     }
 
-                Image(systemName: segment.icon)
+                Image(systemName: segment.effectiveIcon)
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(isSelected ? .white : .secondary)
             }

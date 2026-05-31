@@ -19,30 +19,9 @@ struct TripEntryPreviewView: View {
                     PriceBlock(title: "Duration", value: "\(recommendation.durationDays) days")
                 }
  
-                SectionHeader(
-                    title: "Next screen",
-                    subtitle: "This card is ready to open the segmented timeline and smart map flow."
-                )
-
-                VStack(alignment: .leading, spacing: 12) {
-                    ForEach(MockTravelData.tripDetails.segments.prefix(4)) { segment in
-                        HStack(alignment: .top, spacing: 12) {
-                            Image(systemName: segment.icon)
-                                .font(.headline)
-                                .foregroundStyle(.green)
-                                .frame(width: 28)
-
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(segment.title)
-                                    .font(.subheadline.weight(.semibold))
-                                Text(segment.labels.joined(separator: " - "))
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            }
-                        }
-                        .padding(12)
-                        .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 8))
-                    }
+                if !recommendation.reasonLabels.isEmpty {
+                    SectionHeader(title: "Why this trip", subtitle: "Highlights selected for you")
+                    FlowLayout(items: recommendation.reasonLabels)
                 }
             }
             .padding(16)

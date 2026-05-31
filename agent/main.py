@@ -64,7 +64,6 @@ AGENT_MEMORY_LIMIT = 5
 # Pydantic models
 # ---------------------------------------------------------------------------
 
-ALLOWED_COUNTRIES = {"Казахстан", "Япония", "Германия"}
 ALLOWED_THEMES = {
     "Romantic",
     "Luxury",
@@ -93,7 +92,7 @@ class TripRequest(BaseModel):
 class TripData(BaseModel):
     country: Optional[str] = Field(
         default=None,
-        description="Destination country (Казахстан, Япония or Германия)",
+        description="Destination country",
     )
     departure_date: Optional[str] = Field(
         default=None, description="Departure date in YYYY-MM-DD format"
@@ -116,9 +115,7 @@ class TripData(BaseModel):
         if v is None:
             return None
         v_clean = v.strip()
-        if v_clean not in ALLOWED_COUNTRIES:
-            return None
-        return v_clean
+        return v_clean or None
 
     @field_validator("theme")
     @classmethod
@@ -250,7 +247,7 @@ SYSTEM_PROMPT = """You are a travel-request parser. The user writes a free-text 
 Your job is to extract trip parameters and return **only** a valid JSON object. Do not wrap it in markdown, do not add explanations.
 
 Required JSON fields:
-- "country"      : one of ["Казахстан", "Япония", "Германия"]. Use **null** if not mentioned or unknown.
+- "country"      : destination country if mentioned. Use **null** if not mentioned.
 - "departure_date": date the user wants to leave (YYYY-MM-DD). Use **null** if not mentioned.
 - "arrival_date" : date the user wants to arrive / land (YYYY-MM-DD). Use **null** if not mentioned.
 - "city"         : destination city. Use **null** if not mentioned.
@@ -278,7 +275,7 @@ ANSWER_MEMORY may contain up to 5 latest previous answers from the same user ses
 
 JSON fields:
 - "question": cleaned original question, string.
-- "country": country if mentioned. Prefer one of ["Казахстан", "Япония", "Германия"], otherwise null.
+- "country": country if mentioned. Otherwise null.
 - "city": city if mentioned, otherwise null.
 - "place": place name, district, area, or broad location if mentioned, otherwise null.
 - "attraction": attraction/landmark name if mentioned, otherwise null.

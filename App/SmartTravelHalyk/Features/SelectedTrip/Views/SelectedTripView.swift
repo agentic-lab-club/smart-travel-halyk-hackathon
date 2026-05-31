@@ -159,7 +159,6 @@ struct SelectedTripView: View {
         if let hotel = viewModel.hotelDetails {
             TripSectionHeader("Hotel", hotel.name)
                 .padding(.horizontal, 16)
-                .padding(.bottom, 10)
 
             let bindableVM = Bindable(viewModel)
             HotelDecisionView(
@@ -186,7 +185,6 @@ struct SelectedTripView: View {
         } else {
             TripSectionHeader("Flights", flights.count == 1 ? "1 flight" : "\(flights.count) flights")
                 .padding(.horizontal, 16)
-                .padding(.bottom, 10)
 
             VStack(alignment: .leading, spacing: 12) {
                 FlightRouteSummaryCard(flights: flights)
@@ -701,7 +699,6 @@ private struct TripSectionHeader: View {
 private struct BookTripFooter: View {
     let totalCost: Money
     let onBook: () -> Void
-    @State private var pulse = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -728,13 +725,10 @@ private struct BookTripFooter: View {
                         .background(
                             Capsule()
                                 .fill(Color.green)
-                                .shadow(color: .green.opacity(pulse ? 0.55 : 0.25), radius: pulse ? 16 : 8, y: 4)
+                                .shadow(color: .green.opacity(0.35), radius: 10, y: 4)
                         )
-                        .scaleEffect(pulse ? 1.03 : 1.0)
-                        .animation(.easeInOut(duration: 1.2).repeatForever(autoreverses: true), value: pulse)
                 }
                 .buttonStyle(.plain)
-                .onAppear { pulse = true }
             }
             .padding(.horizontal, 20)
             .padding(.vertical, 12)

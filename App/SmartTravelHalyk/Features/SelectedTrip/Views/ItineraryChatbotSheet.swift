@@ -27,12 +27,18 @@ struct ItineraryChatbotSheet: View {
     let viewModel: SelectedTripViewModel
     let mode: ChatbotMode
 
-    @State private var chatService = ClaudeChatService()
+    @State private var chatService: ClaudeChatService
     @State private var inputText = ""
     @State private var didSendOpener = false
     @Environment(\.dismiss) private var dismiss
 
     private var city: String { viewModel.destinationCity }
+
+    init(viewModel: SelectedTripViewModel, mode: ChatbotMode) {
+        self.viewModel = viewModel
+        self.mode = mode
+        _chatService = State(initialValue: ClaudeChatService(sessionId: viewModel.trip.tripId))
+    }
 
     var body: some View {
         NavigationStack {
@@ -55,7 +61,7 @@ struct ItineraryChatbotSheet: View {
         .task {
             guard !didSendOpener else { return }
             didSendOpener = true
-            await chatService.send(openerMessage, systemPrompt: systemPrompt)
+            await chatService.loadHistory(opener: openerMessage)
         }
     }
 
@@ -70,6 +76,7 @@ struct ItineraryChatbotSheet: View {
                             message: msg,
                             onAddPlace: { place in addPlace(place) },
                             onReplacePlace: { place in replacePlace(with: place) },
+                            isPlaceAdded: { place in isPlaceAlreadyAdded(place) },
                             isReplaceMode: isReplaceMode
                         )
                         .id(msg.id)
@@ -130,6 +137,8 @@ struct ItineraryChatbotSheet: View {
     }
 
     private func addPlace(_ place: SuggestedPlace) {
+        guard !isPlaceAlreadyAdded(place) else { return }
+
         let ref = viewModel.lastDaySegment
         let seg = place.toSegment(
             dayNumber: ref?.dayNumber ?? viewModel.trip.durationDays,
@@ -137,7 +146,6 @@ struct ItineraryChatbotSheet: View {
             city: city
         )
         viewModel.addSegment(seg)
-        dismiss()
     }
 
     private func replacePlace(with place: SuggestedPlace) {
@@ -155,6 +163,19 @@ struct ItineraryChatbotSheet: View {
     private var isReplaceMode: Bool {
         if case .replaceSegment = mode { return true }
         return false
+    }
+
+    private func isPlaceAlreadyAdded(_ place: SuggestedPlace) -> Bool {
+        let normalizedTitle = normalizedPlaceTitle(place.title)
+        return viewModel.segments.contains { segment in
+            normalizedPlaceTitle(segment.title) == normalizedTitle
+        }
+    }
+
+    private func normalizedPlaceTitle(_ title: String) -> String {
+        title
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .folding(options: [.caseInsensitive, .diacriticInsensitive], locale: .current)
     }
 
     // MARK: - Prompts
@@ -211,6 +232,7 @@ private struct MessageBubble: View {
     let message: ClaudeChatService.ChatMessage
     let onAddPlace: (SuggestedPlace) -> Void
     let onReplacePlace: (SuggestedPlace) -> Void
+    let isPlaceAdded: (SuggestedPlace) -> Bool
     let isReplaceMode: Bool
 
     var body: some View {
@@ -235,11 +257,14 @@ private struct MessageBubble: View {
             if !message.places.isEmpty {
                 VStack(spacing: 8) {
                     ForEach(message.places) { place in
+                        let isAdded = !isReplaceMode && isPlaceAdded(place)
                         PlaceSuggestionCard(
                             place: place,
-                            actionLabel: isReplaceMode ? "Use this" : "Add to trip",
-                            actionIcon: isReplaceMode ? "arrow.triangle.2.circlepath" : "plus.circle.fill"
+                            actionLabel: isAdded ? "Added" : (isReplaceMode ? "Use this" : "Add to trip"),
+                            actionIcon: isAdded ? "checkmark.circle.fill" : (isReplaceMode ? "arrow.triangle.2.circlepath" : "plus.circle.fill"),
+                            isAdded: isAdded
                         ) {
+                            guard !isAdded else { return }
                             if isReplaceMode {
                                 onReplacePlace(place)
                             } else {
@@ -259,6 +284,7 @@ private struct PlaceSuggestionCard: View {
     let place: SuggestedPlace
     let actionLabel: String
     let actionIcon: String
+    let isAdded: Bool
     let onTap: () -> Void
 
     var body: some View {
@@ -284,9 +310,10 @@ private struct PlaceSuggestionCard: View {
                     .foregroundStyle(.white)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 6)
-                    .background(.green, in: Capsule())
+                    .background(isAdded ? Color.secondary.opacity(0.45) : .green, in: Capsule())
             }
             .buttonStyle(.plain)
+            .disabled(isAdded)
         }
         .padding(12)
         .frame(maxWidth: 280, alignment: .leading)

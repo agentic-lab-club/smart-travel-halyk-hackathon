@@ -7,6 +7,7 @@ struct TripBudgetSheet: View {
     private var positiveItems: [BudgetItem] {
         viewModel.effectiveBudget.items.filter { $0.amount > 0 }
     }
+
     private var discountItems: [BudgetItem] {
         viewModel.effectiveBudget.items.filter { $0.amount < 0 }
     }
@@ -36,10 +37,6 @@ struct TripBudgetSheet: View {
                             .padding(.horizontal, 32)
                             .padding(.top, -12)
                     }
-
-                    // ── Mode comparison row ────────────────────────
-                    ModeComparisonRow(viewModel: viewModel)
-                        .padding(.horizontal, 16)
 
                     // ── Category tiles ─────────────────────────────
                     LazyVGrid(

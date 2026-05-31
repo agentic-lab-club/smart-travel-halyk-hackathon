@@ -60,9 +60,22 @@ final class EntryFlowViewModel {
 
     var canConfirm: Bool { planningState == .readyToConfirm }
 
+    var allMissingFieldsFilled: Bool {
+        missingFields.allSatisfy { field in
+            let value = (missingFieldInputs[field.key] ?? prefilledValue(for: field.key))
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            if field.key == "budget" {
+                return (Int(value) ?? 0) > 0
+            }
+            return !value.isEmpty
+        }
+    }
+
+    var createdTrips: [TripDetailsResponse] = []
+
     var isShowingGeneratedTrip: Bool {
         get { generatedTrip != nil }
-        set { if !newValue { generatedTrip = nil } }
+        set { if !newValue { resetPlanning() } }
     }
 
     // MARK: - Discovery helpers
@@ -137,6 +150,12 @@ final class EntryFlowViewModel {
     func submitChatbotPrompt() async {
         let prompt = chatbotPrompt.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !prompt.isEmpty else { return }
+
+        if let validationError = validatePrompt(prompt, isInitial: activeTripId == nil) {
+            planningState = .failed(validationError)
+            return
+        }
+
         chatbotPrompt = ""
 
         if activeTripId == nil {
@@ -154,7 +173,7 @@ final class EntryFlowViewModel {
             applyPlanningTrip(creation)
             await continuePlanning(prompt: prompt)
         } catch {
-            planningState = .failed("Could not start planning session.")
+            planningState = .failed("Could not start planning session. \(error.localizedDescription)")
         }
     }
 
@@ -166,7 +185,7 @@ final class EntryFlowViewModel {
             planningMessages = response.messages
             applyPlanningTrip(response.trip)
         } catch {
-            planningState = .failed("Could not send message.")
+            planningState = .failed("Could not send message. \(error.localizedDescription)")
         }
     }
 
@@ -181,19 +200,29 @@ final class EntryFlowViewModel {
     func submitMissingFields() async {
         guard let tripId = activeTripId else { return }
 
-        let request = makePatchTripRequest()
-        if missingFields.contains(where: { $0.key == "budget" }) && request.budget == nil {
-            planningState = .failed("Budget must be a number.")
+        if let validationError = validateBudget() ?? validateDates() {
+            planningState = .failed(validationError)
             return
         }
+
+        let request = makePatchTripRequest()
 
         planningState = .collecting
         do {
             let response = try await apiClient.patchTrip(tripId: tripId, request: request)
             applyPlanningTrip(response)
         } catch {
-            planningState = .failed("Could not save trip details.")
+            planningState = .failed("Could not save trip details. \(error.localizedDescription)")
         }
+    }
+
+    /// Patches missing fields (if any) then immediately confirms the trip.
+    func submitAndConfirm() async {
+        if !missingFields.isEmpty {
+            await submitMissingFields()
+            guard case .readyToConfirm = planningState else { return }
+        }
+        await confirmTrip()
     }
 
     /// Explicitly confirms the trip and fetches the final generated bundle.
@@ -203,9 +232,10 @@ final class EntryFlowViewModel {
         do {
             let trip = try await apiClient.confirmTrip(tripId: tripId)
             generatedTrip = trip
+            createdTrips.append(trip)
             planningState = .confirmed
         } catch {
-            planningState = .failed("Could not generate trip plan.")
+            planningState = .failed(error.localizedDescription)
         }
     }
 
@@ -218,9 +248,75 @@ final class EntryFlowViewModel {
         missingFieldInputs = [:]
         generatedTrip = nil
         planningState = .idle
+        // createdTrips intentionally preserved across sessions
     }
 
     // MARK: - Private helpers
+
+    private func validatePrompt(_ prompt: String, isInitial: Bool) -> String? {
+        let minLength = isInitial ? Self.minInitialPromptLength : Self.minChatPromptLength
+        if prompt.count < minLength {
+            return "Please enter at least \(minLength) characters."
+        }
+        return nil
+    }
+
+    private func validateBudget() -> String? {
+        guard missingFields.contains(where: { $0.key == "budget" }) else { return nil }
+        let raw = missingFieldInputs["budget"]?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        if raw.isEmpty {
+            return "Budget is required."
+        }
+        guard let budget = Int(raw) else {
+            return "Budget must be a number."
+        }
+        if budget <= 0 {
+            return "Budget must be greater than 0."
+        }
+        return nil
+    }
+
+    private func validateDates() -> String? {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        guard let minStartDate = calendar.date(byAdding: .day, value: 1, to: today) else {
+            return nil
+        }
+
+        if let startDate = parseDate(fieldKey: "start_date") {
+            let startDay = calendar.startOfDay(for: startDate)
+            if startDay < minStartDate {
+                return "Start date must be after today."
+            }
+        }
+
+        if let startDate = parseDate(fieldKey: "start_date"),
+           let endDate = parseDate(fieldKey: "end_date") {
+            let startDay = calendar.startOfDay(for: startDate)
+            let endDay = calendar.startOfDay(for: endDate)
+            if endDay < startDay {
+                return "End date cannot be earlier than the start date."
+            }
+        }
+
+        return nil
+    }
+
+    private static let planningDateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = TimeZone(secondsFromGMT: 0)
+        return formatter
+    }()
+
+    private func parseDate(fieldKey: String) -> Date? {
+        guard let raw = normalizedInput(for: fieldKey) else { return nil }
+        return Self.planningDateFormatter.date(from: raw)
+    }
+
+    private static let minInitialPromptLength = 3
+    private static let minChatPromptLength = 2
 
     private func apply(profile: UserProfileResponse, recommendations: RecommendationsResponse) {
         self.profile = profile
@@ -232,7 +328,13 @@ final class EntryFlowViewModel {
     private func applyPlanningTrip(_ trip: PlanningTripResponse) {
         activeTripId = trip.tripId
         normalizedPlanningFields = trip.normalizedFields
-        missingFields = trip.missingFields
+        missingFields = trip.missingFields.filter { field in
+            let camelKey = Self.snakeToCamel(field.key)
+            let value = (trip.normalizedFields[camelKey] ?? trip.normalizedFields[field.key])?.stringValue
+            guard let value, !value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return true }
+            if field.key == "budget", let n = Int(value), n <= 0 { return true }
+            return false
+        }
 
         if case .failed = planningState {
             planningState = .collecting
@@ -252,7 +354,18 @@ final class EntryFlowViewModel {
     }
 
     private func prefilledValue(for fieldKey: String) -> String {
-        normalizedPlanningFields[fieldKey]?.stringValue ?? ""
+        // normalizedPlanningFields keys are camelCase (JSONDecoder convertFromSnakeCase converts dict keys too)
+        // so look up both the camelCase version and the original snake_case key
+        let camelKey = Self.snakeToCamel(fieldKey)
+        return normalizedPlanningFields[camelKey]?.stringValue
+            ?? normalizedPlanningFields[fieldKey]?.stringValue
+            ?? ""
+    }
+
+    private static func snakeToCamel(_ key: String) -> String {
+        let parts = key.split(separator: "_")
+        guard parts.count > 1 else { return key }
+        return parts[0] + parts.dropFirst().map { $0.capitalized }.joined()
     }
 
     private func makePatchTripRequest() -> PatchTripRequest {
@@ -280,8 +393,10 @@ final class EntryFlowViewModel {
     }
 
     private func normalizedBudgetInput() -> Int? {
-        guard let budgetString = normalizedInput(for: "budget") else { return nil }
-        return Int(budgetString)
+        guard let budgetString = missingFieldInputs["budget"],
+              let budget = Int(budgetString.trimmingCharacters(in: .whitespacesAndNewlines)),
+              budget > 0 else { return nil }
+        return budget
     }
 
     private func matchesBudget(_ recommendation: TripRecommendation) -> Bool {

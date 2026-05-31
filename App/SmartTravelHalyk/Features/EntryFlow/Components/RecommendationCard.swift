@@ -34,18 +34,6 @@ struct RecommendationCard: View {
                     .font(.largeTitle)
                     .bold()
                     .foregroundStyle(.white)
-                    .overlay(alignment: .topTrailing) {
-                        if let cashback = recommendation.cashbackEstimate {
-                            Text(cashback.displayString)
-                                .font(.footnote)
-                                .fontWeight(.semibold)
-                                .padding(8)
-                                .background {
-                                    Capsule().foregroundStyle(.white)
-                                }
-                                .offset(x: 20, y: -20)
-                        }
-                    }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(16)
@@ -56,9 +44,12 @@ struct RecommendationCard: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .frame(height: 450)
         .background {
-            Image("ExampleTripImage")
-                .scaledToFill()
-                .clipped()
+            UnsplashImageView(query: recommendation.destinationName.components(separatedBy: ",").first ?? recommendation.destinationName) {
+                Image("ExampleTripImage")
+                    .resizable()
+                    .scaledToFill()
+            }
+            .clipped()
         }
         .clipped()
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
