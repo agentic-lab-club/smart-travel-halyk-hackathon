@@ -142,6 +142,23 @@ class PlanningServiceTests(unittest.TestCase):
         self.assertIn("destination_country", response.changed_fields)
         self.assertIn("destination_country", response.conflicting_fields)
 
+    def test_legacy_parse_preserves_arbitrary_country(self):
+        service = PlanningService(
+            llm_gateway=FakeGateway(
+                payload={
+                    "normalized_fields": {
+                        "destination_country": "Spain",
+                        "destination_city": "Barcelona",
+                    }
+                }
+            )
+        )
+
+        response = service.parse_trip_legacy("Trip to Barcelona")
+
+        self.assertEqual(response.parsed.country, "Spain")
+        self.assertEqual(response.parsed.city, "Barcelona")
+
     def test_json_failure_returns_structured_partial_response(self):
         service = PlanningService(llm_gateway=FailingJSONGateway())
 

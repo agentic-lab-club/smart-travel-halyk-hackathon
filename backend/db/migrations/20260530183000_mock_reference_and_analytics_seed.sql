@@ -92,6 +92,74 @@ CREATE INDEX IF NOT EXISTS idx_acc_tx_direction ON account_transactions(directio
 CREATE INDEX IF NOT EXISTS idx_acc_tx_category ON account_transactions(category_code);
 CREATE INDEX IF NOT EXISTS idx_acc_tx_status ON account_transactions(status);
 
+-- Kino.kz-derived mock transactions for cities from Almaty (city_id=2) to Shymkent (city_id=18).
+-- Event names, categories, dates, venues and starting prices are taken from https://kino.kz/ru pages with city cookies.
+INSERT INTO kino_ticket_transactions (
+    transaction_id, user_id, purchase_datetime, event_datetime, event_id, event_name,
+    class_code, subclass_code, genre_code, city, venue_name, tickets_count, ticket_price,
+    total_amount, payment_method, bonus_used, cashback_amount, source_platform, status
+)
+VALUES
+    (930201, 700002, '2026-05-30 09:07:00', '2026-05-28 00:00:00', 12109, 'Грязные деньги', 'movie', 'action_movie', 'action', 'Алматы', 'Kino.kz', 1, NULL, NULL, 'halyk_card', 0.00, 0.00, 'kino_kz_web', 'paid'),
+    (930202, 700002, '2026-05-30 09:14:00', '2026-06-06 00:00:00', 9693, 'Фестиваль Воздушных Шаров', 'concert', 'festival', NULL, 'Алматы', 'Ипподром на верхней Каскеленской трассе', 2, 5000.00, 10000.00, 'halyk_card', 0.00, 500.00, 'kino_kz_web', 'paid'),
+    (930203, 700002, '2026-05-30 09:21:00', '2026-06-06 00:00:00', 9249, 'First Stage', 'theatre', 'theatre_performance', NULL, 'Алматы', 'Дворец Республики', 2, 13000.00, 26000.00, 'halyk_card', 0.00, 1300.00, 'kino_kz_web', 'paid'),
+    (930204, 700002, '2026-05-30 09:28:00', '2026-05-31 00:00:00', 9349, 'Келинология', 'standup', 'standup_show', NULL, 'Алматы', 'Punch Stand-Up Club', 2, 3000.00, 6000.00, 'halyk_card', 0.00, 300.00, 'kino_kz_web', 'paid'),
+    (930205, 700002, '2026-05-30 09:35:00', '2026-05-30 00:00:00', 9785, 'Смотровая Площадка City View', 'entertainment', 'entertainment', NULL, 'Алматы', 'Gorilla Energy Park', 2, 2500.00, 5000.00, 'halyk_card', 0.00, 250.00, 'kino_kz_web', 'paid'),
+    (930206, 700002, '2026-05-30 09:42:00', '2026-05-31 00:00:00', 8973, 'Almaty Museum of Arts: Входной билет', 'art', 'museum_visit', NULL, 'Алматы', 'Almaty Museum of Arts', 2, 500.00, 1000.00, 'halyk_card', 0.00, 50.00, 'kino_kz_web', 'paid'),
+    (930207, 700002, '2026-05-30 09:49:00', '2026-05-31 00:00:00', 7731, 'Экспресс-тур однодневный: Кольсай-Кайынды + Чёрный каньон', 'tours', 'tour_excursion', NULL, 'Алматы', 'Туристическая компания «Blast Tour»', 2, 13500.00, 27000.00, 'halyk_card', 0.00, 1350.00, 'kino_kz_web', 'paid'),
+    (930208, 700002, '2026-05-30 09:56:00', '2026-05-31 00:00:00', 9575, 'Музей мороженого и сладостей в Алматы', 'family', 'family_entertainment', NULL, 'Алматы', 'Музей мороженого и сладостей.', 2, 3700.00, 7400.00, 'halyk_card', 0.00, 370.00, 'kino_kz_web', 'paid'),
+    (930209, 700002, '2026-05-30 10:03:00', '2026-05-30 00:00:00', 9261, 'Прокатный картинг', 'sport', 'karting', NULL, 'Алматы', 'Sokol International Circuit', 2, 10000.00, 20000.00, 'halyk_card', 0.00, 1000.00, 'kino_kz_web', 'paid'),
+    (930301, 700003, '2026-05-30 10:10:00', '2026-05-28 00:00:00', 12109, 'Грязные деньги', 'movie', 'action_movie', 'action', 'Актау', 'Kino.kz', 1, NULL, NULL, 'halyk_card', 0.00, 0.00, 'kino_kz_web', 'paid'),
+    (930302, 700003, '2026-05-30 10:17:00', '2026-06-27 00:00:00', 9817, 'First Fest x Mahmut Orhan в Актау', 'concert', 'concert', NULL, 'Актау', 'Тематический парк «TetysBlu»', 2, 10000.00, 20000.00, 'halyk_card', 0.00, 1000.00, 'kino_kz_web', 'paid'),
+    (930303, 700003, '2026-05-30 10:24:00', '2026-06-06 00:00:00', 9885, 'NAIZA 84', 'sport', 'sport_event', NULL, 'Актау', 'Halyk Arena Aktau', 2, 3000.00, 6000.00, 'halyk_card', 0.00, 300.00, 'kino_kz_web', 'paid'),
+    (930401, 700004, '2026-05-30 10:31:00', '2026-05-28 00:00:00', 12109, 'Грязные деньги', 'movie', 'action_movie', 'action', 'Актобе', 'Kino.kz', 1, NULL, NULL, 'halyk_card', 0.00, 0.00, 'kino_kz_web', 'paid'),
+    (930402, 700004, '2026-05-30 10:38:00', '2026-06-01 00:00:00', 9659, 'Turar Ақтөбеде', 'concert', 'concert', NULL, 'Актобе', 'Өнер орталығы', 2, 5000.00, 10000.00, 'halyk_card', 0.00, 500.00, 'kino_kz_web', 'paid'),
+    (930501, 700005, '2026-05-30 10:45:00', '2026-05-28 00:00:00', 12109, 'Грязные деньги', 'movie', 'action_movie', 'action', 'Атырау', 'Kino.kz', 1, NULL, NULL, 'halyk_card', 0.00, 0.00, 'kino_kz_web', 'paid'),
+    (930502, 700005, '2026-05-30 10:52:00', '2026-06-03 00:00:00', 9661, 'Turar Атырауда', 'concert', 'concert', NULL, 'Атырау', 'Областной академический драмтеатр им. Махамбета Утемисова', 2, 10000.00, 20000.00, 'halyk_card', 0.00, 1000.00, 'kino_kz_web', 'paid'),
+    (930601, 700006, '2026-05-30 10:59:00', '2026-05-28 00:00:00', 12088, 'Папасының қызы', 'movie', 'adventure_movie', 'adventure', 'Балхаш', 'Kino.kz', 1, NULL, NULL, 'halyk_card', 0.00, 0.00, 'kino_kz_web', 'paid'),
+    (930701, 700007, '2026-05-30 11:06:00', '2026-05-28 00:00:00', 12109, 'Грязные деньги', 'movie', 'action_movie', 'action', 'Караганда', 'Kino.kz', 1, NULL, NULL, 'halyk_card', 0.00, 0.00, 'kino_kz_web', 'paid'),
+    (930702, 700007, '2026-05-30 11:13:00', '2026-06-12 00:00:00', 9675, 'Группа КИНОГЕРОЙ - лучшие хиты группы КИНО.', 'concert', 'concert', NULL, 'Караганда', 'Ресторан MODE', 2, 6000.00, 12000.00, 'halyk_card', 0.00, 600.00, 'kino_kz_web', 'paid'),
+    (930703, 700007, '2026-05-30 11:20:00', '2026-09-28 00:00:00', 9741, 'Спектакль «Ночь ее откровений»', 'theatre', 'theatre_performance', NULL, 'Караганда', 'Дворец культуры горняков', 2, 16000.00, 32000.00, 'halyk_card', 0.00, 1600.00, 'kino_kz_web', 'paid'),
+    (930801, 700008, '2026-05-30 11:27:00', '2026-05-28 00:00:00', 12109, 'Грязные деньги', 'movie', 'action_movie', 'action', 'Костанай', 'Kino.kz', 1, NULL, NULL, 'halyk_card', 0.00, 0.00, 'kino_kz_web', 'paid'),
+    (930802, 700008, '2026-05-30 11:34:00', '2026-06-06 00:00:00', 9907, 'Kalifarniya Қостанайда', 'concert', 'concert', NULL, 'Костанай', 'Дворец "Жастар"', 2, 5000.00, 10000.00, 'halyk_card', 0.00, 500.00, 'kino_kz_web', 'paid'),
+    (930901, 700009, '2026-05-30 11:41:00', '2026-05-28 00:00:00', 12109, 'Грязные деньги', 'movie', 'action_movie', 'action', 'Кызылорда', 'Kino.kz', 1, NULL, NULL, 'halyk_card', 0.00, 0.00, 'kino_kz_web', 'paid'),
+    (930902, 700009, '2026-05-30 11:48:00', '2026-07-13 00:00:00', 9837, 'Тур на Байконур с запуском ракеты', 'tours', 'tour_excursion', NULL, 'Кызылорда', 'Туристическая компания Kontakt Agency', 1, 550000.00, 550000.00, 'halyk_card', 0.00, 27500.00, 'kino_kz_web', 'paid'),
+    (931001, 700010, '2026-05-30 11:55:00', '2026-05-28 00:00:00', 12109, 'Грязные деньги', 'movie', 'action_movie', 'action', 'Павлодар', 'Kino.kz', 1, NULL, NULL, 'halyk_card', 0.00, 0.00, 'kino_kz_web', 'paid'),
+    (931101, 700011, '2026-05-30 12:02:00', '2026-05-28 00:00:00', 12109, 'Грязные деньги', 'movie', 'action_movie', 'action', 'Петропавловск', 'Kino.kz', 1, NULL, NULL, 'halyk_card', 0.00, 0.00, 'kino_kz_web', 'paid'),
+    (931201, 700012, '2026-05-30 12:09:00', '2026-06-03 00:00:00', 9937, 'Kalifarniya Семейде', 'concert', 'concert', NULL, 'Семей', 'Городской дворец культуры (Семей)', 2, 5000.00, 10000.00, 'halyk_card', 0.00, 500.00, 'kino_kz_web', 'paid'),
+    (931301, 700013, '2026-05-30 12:16:00', '2026-05-28 00:00:00', 12113, 'Американский маньяк', 'movie', 'detective_movie', 'detective', 'Талдыкорган', 'Kino.kz', 1, NULL, NULL, 'halyk_card', 0.00, 0.00, 'kino_kz_web', 'paid'),
+    (931302, 700013, '2026-05-30 12:23:00', '2026-06-12 00:00:00', 9909, 'Kalifarniya Талдықорғанда', 'concert', 'concert', NULL, 'Талдыкорган', 'Талдыкорганский казахский драмтеатр им. Б. Римовой', 2, 5000.00, 10000.00, 'halyk_card', 0.00, 500.00, 'kino_kz_web', 'paid'),
+    (931401, 700014, '2026-05-30 12:30:00', '2026-05-28 00:00:00', 12109, 'Грязные деньги', 'movie', 'action_movie', 'action', 'Тараз', 'Kino.kz', 1, NULL, NULL, 'halyk_card', 0.00, 0.00, 'kino_kz_web', 'paid'),
+    (931501, 700015, '2026-05-30 12:37:00', '2026-05-28 00:00:00', 12109, 'Грязные деньги', 'movie', 'action_movie', 'action', 'Темиртау', 'Kino.kz', 1, NULL, NULL, 'halyk_card', 0.00, 0.00, 'kino_kz_web', 'paid'),
+    (931601, 700016, '2026-05-30 12:44:00', '2026-05-28 00:00:00', 12109, 'Грязные деньги', 'movie', 'action_movie', 'action', 'Уральск', 'Kino.kz', 1, NULL, NULL, 'halyk_card', 0.00, 0.00, 'kino_kz_web', 'paid'),
+    (931602, 700016, '2026-05-30 12:51:00', '2026-05-31 00:00:00', 9657, 'Turar Оралда', 'concert', 'concert', NULL, 'Уральск', 'Дворец культуры «Атамекен»', 2, 5000.00, 10000.00, 'halyk_card', 0.00, 500.00, 'kino_kz_web', 'paid'),
+    (931701, 700017, '2026-05-30 12:58:00', '2026-06-04 00:00:00', 9913, 'Kalifarniya Өскеменде', 'concert', 'concert', NULL, 'Усть-Каменогорск', 'КГКП «Восточно-Казахстанская областная филармония»', 2, 5000.00, 10000.00, 'halyk_card', 0.00, 500.00, 'kino_kz_web', 'paid'),
+    (931801, 700018, '2026-05-30 13:05:00', '2026-05-28 00:00:00', 12109, 'Грязные деньги', 'movie', 'action_movie', 'action', 'Шымкент', 'Kino.kz', 1, NULL, NULL, 'halyk_card', 0.00, 0.00, 'kino_kz_web', 'paid'),
+    (931802, 700018, '2026-05-30 13:12:00', '2026-06-20 00:00:00', 9307, 'Ozoda Nursaidova в Шымкенте', 'concert', 'concert', NULL, 'Шымкент', 'Qyzgalgaq saraiy', 2, 7000.00, 14000.00, 'halyk_card', 0.00, 700.00, 'kino_kz_web', 'paid'),
+    (931803, 700018, '2026-05-30 13:19:00', '2026-05-31 00:00:00', 6451, 'Атжалман ғасыр', 'theatre', 'theatre_drama', NULL, 'Шымкент', 'Шымкентский городской академический казахский драматический театр им. Ж. Шанина', 2, 1000.00, 2000.00, 'halyk_card', 0.00, 100.00, 'kino_kz_web', 'paid'),
+    (931804, 700018, '2026-05-30 13:26:00', '2026-05-30 00:00:00', 8323, 'Туркестан - Столица Тюркских Стран (3 дня 2 ночи)', 'entertainment', 'excursion', NULL, 'Шымкент', 'Туристическая компания "Shymtour"', 2, 46200.00, 92400.00, 'halyk_card', 0.00, 4620.00, 'kino_kz_web', 'paid'),
+    (931805, 700018, '2026-05-30 13:33:00', '2026-05-30 00:00:00', 8323, 'Туркестан - Столица Тюркских Стран (3 дня 2 ночи)', 'tours', 'tour_excursion', NULL, 'Шымкент', 'Туристическая компания "Shymtour"', 2, 46200.00, 92400.00, 'halyk_card', 0.00, 4620.00, 'kino_kz_web', 'paid'),
+    (931806, 700018, '2026-05-30 13:40:00', '2026-05-30 00:00:00', 8639, 'Стрелковый клуб пневматического оружия BangBang в Шымкенте', 'sport', 'sport_event', NULL, 'Шымкент', 'Стрелковый клуб пневматического оружия BangBang в Шымкенте', 2, 8000.00, 16000.00, 'halyk_card', 0.00, 800.00, 'kino_kz_web', 'paid')
+ON CONFLICT (transaction_id) DO UPDATE SET
+    user_id = EXCLUDED.user_id,
+    purchase_datetime = EXCLUDED.purchase_datetime,
+    event_datetime = EXCLUDED.event_datetime,
+    event_id = EXCLUDED.event_id,
+    event_name = EXCLUDED.event_name,
+    class_code = EXCLUDED.class_code,
+    subclass_code = EXCLUDED.subclass_code,
+    genre_code = EXCLUDED.genre_code,
+    city = EXCLUDED.city,
+    venue_name = EXCLUDED.venue_name,
+    tickets_count = EXCLUDED.tickets_count,
+    ticket_price = EXCLUDED.ticket_price,
+    total_amount = EXCLUDED.total_amount,
+    payment_method = EXCLUDED.payment_method,
+    bonus_used = EXCLUDED.bonus_used,
+    cashback_amount = EXCLUDED.cashback_amount,
+    source_platform = EXCLUDED.source_platform,
+    status = EXCLUDED.status;
+
 -- Travel reference data for trip recommendations
 CREATE TABLE IF NOT EXISTS travel_countries (
     country_code CHAR(2) PRIMARY KEY,

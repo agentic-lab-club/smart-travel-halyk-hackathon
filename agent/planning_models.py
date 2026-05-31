@@ -6,21 +6,6 @@ from typing import Any, Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-ALLOWED_COUNTRIES = {
-    "Қазақстан",
-    "Казахстан",
-    "Kazakhstan",
-    "Япония",
-    "Japan",
-    "Германия",
-    "Germany",
-    "Турция",
-    "Turkey",
-    "ОАЭ",
-    "UAE",
-    "United Arab Emirates",
-}
-
 ALLOWED_THEMES = {
     "Romantic",
     "Luxury",
@@ -81,9 +66,7 @@ class TripData(BaseModel):
         if v is None:
             return None
         cleaned = v.strip()
-        if cleaned not in ALLOWED_COUNTRIES:
-            return None
-        return cleaned
+        return cleaned or None
 
     @field_validator("theme")
     @classmethod
