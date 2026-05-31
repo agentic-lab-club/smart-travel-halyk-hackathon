@@ -1,3 +1,40 @@
+"""Thin FastAPI bootstrap for planning and guide routers."""
+
+from __future__ import annotations
+
+import logging
+
+from fastapi import FastAPI
+
+from api_guide import create_guide_router
+from api_planning import create_planning_router
+from guide_service import GuideService
+from planning_service import PlanningService
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(name)s %(message)s",
+)
+
+
+def create_app(
+    planning_service: PlanningService | None = None,
+    guide_service: GuideService | None = None,
+) -> FastAPI:
+    app = FastAPI(title="SmartTravel Halyk - Travel Agent")
+    app.include_router(create_planning_router(planning_service or PlanningService()))
+    app.include_router(create_guide_router(guide_service or GuideService()))
+
+    @app.get("/health")
+    async def health() -> dict[str, str]:
+        return {"status": "ok"}
+
+    return app
+
+
+app = create_app()
+
+LEGACY_MAIN = r'''
 """FastAPI service for travel parsing and place Q&A via DeepSeek LLM."""
 import json
 import os
@@ -1201,3 +1238,4 @@ async def ask_agent(request: AgentRequest):
 @app.get("/health")
 async def health():
     return {"status": "ok"}
+'''
