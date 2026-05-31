@@ -54,7 +54,7 @@ struct MapMarkerPin: View {
                     .frame(width: isSelected ? 40 : 32, height: isSelected ? 40 : 32)
                     .shadow(color: markerColor.opacity(0.4), radius: isSelected ? 8 : 4)
 
-                Image(systemName: marker.icon ?? iconForType)
+                Image(systemName: resolvedIcon)
                     .font(.system(size: isSelected ? 17 : 13, weight: .semibold))
                     .foregroundStyle(.white)
             }
@@ -64,6 +64,11 @@ struct MapMarkerPin: View {
                 .frame(width: 8, height: 5)
         }
         .animation(.smooth(duration: 0.2), value: isSelected)
+    }
+
+    private var resolvedIcon: String {
+        if let icon = marker.icon, !icon.isEmpty { return icon }
+        return iconForType
     }
 
     private var markerColor: Color {

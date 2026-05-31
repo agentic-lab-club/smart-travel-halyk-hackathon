@@ -6,10 +6,12 @@ import Observation
 final class MyTripsViewModel {
     private let bookingService: BookingService
 
-    var displayedMonth: Date = Calendar.current.startOfMonth(for: Date())
+    var displayedMonth: Date
 
     init(bookingService: BookingService) {
         self.bookingService = bookingService
+        let firstUpcoming = bookingService.upcomingTrips.first.flatMap { $0.trip.startDate.asDate }
+        displayedMonth = Calendar.current.startOfMonth(for: firstUpcoming ?? Date())
     }
 
     // MARK: - Data
@@ -64,6 +66,11 @@ final class MyTripsViewModel {
     func stepMonth(by delta: Int) {
         guard let next = Calendar.current.date(byAdding: .month, value: delta, to: displayedMonth) else { return }
         displayedMonth = next
+    }
+
+    func jumpToUpcomingTrip() {
+        guard let date = upcomingTrips.first.flatMap({ $0.trip.startDate.asDate }) else { return }
+        displayedMonth = Calendar.current.startOfMonth(for: date)
     }
 
     func tripForDay(_ day: Date) -> BookedTrip? {

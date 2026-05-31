@@ -71,29 +71,40 @@ struct MyTripsView: View {
                 Text("Calendar")
                     .font(.headline)
                 Spacer()
-                HStack(spacing: 4) {
-                    Button { viewModel.stepMonth(by: -1) } label: {
-                        Image(systemName: "chevron.left")
+                if !viewModel.upcomingTrips.isEmpty {
+                    Button {
+                        withAnimation(.smooth) { viewModel.jumpToUpcomingTrip() }
+                    } label: {
+                        Label("Upcoming", systemImage: "airplane.departure")
                             .font(.caption.weight(.semibold))
-                            .padding(6)
-                            .background(Color(.tertiarySystemGroupedBackground), in: Circle())
-                    }
-                    .buttonStyle(.plain)
-
-                    Text(viewModel.monthTitle)
-                        .font(.subheadline.weight(.semibold))
-                        .frame(minWidth: 110)
-                        .animation(.smooth, value: viewModel.monthTitle)
-                        .contentTransition(.numericText())
-
-                    Button { viewModel.stepMonth(by: 1) } label: {
-                        Image(systemName: "chevron.right")
-                            .font(.caption.weight(.semibold))
-                            .padding(6)
-                            .background(Color(.tertiarySystemGroupedBackground), in: Circle())
+                            .foregroundStyle(.green)
                     }
                     .buttonStyle(.plain)
                 }
+            }
+
+            HStack(spacing: 4) {
+                Button { withAnimation(.smooth) { viewModel.stepMonth(by: -1) } } label: {
+                    Image(systemName: "chevron.left")
+                        .font(.caption.weight(.semibold))
+                        .padding(6)
+                        .background(Color(.tertiarySystemGroupedBackground), in: Circle())
+                }
+                .buttonStyle(.plain)
+
+                Text(viewModel.monthTitle)
+                    .font(.subheadline.weight(.semibold))
+                    .frame(maxWidth: .infinity)
+                    .animation(.smooth, value: viewModel.monthTitle)
+                    .contentTransition(.numericText())
+
+                Button { withAnimation(.smooth) { viewModel.stepMonth(by: 1) } } label: {
+                    Image(systemName: "chevron.right")
+                        .font(.caption.weight(.semibold))
+                        .padding(6)
+                        .background(Color(.tertiarySystemGroupedBackground), in: Circle())
+                }
+                .buttonStyle(.plain)
             }
 
             TripCalendarGrid(viewModel: viewModel, onDayTap: { trip in
