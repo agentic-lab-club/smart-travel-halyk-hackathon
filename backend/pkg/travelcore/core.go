@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"math"
 	"net/http"
 	"strings"
 	"sync"
@@ -14,6 +13,7 @@ import (
 	"github.com/agentic-lab-club/smart-travel-halyk-hackathon/backend/pkg/config"
 	"github.com/agentic-lab-club/smart-travel-halyk-hackathon/backend/pkg/database"
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 )
 
 type PlannerClient interface {
@@ -117,6 +117,100 @@ func (r *Repository) FindTripByHotelID(hotelID string) (*TripState, error) {
 		}
 	}
 	return nil, nil
+}
+
+type recommendationSeedRow struct {
+	TripID             string         `db:"trip_id"`
+	DestinationName    string         `db:"destination_name"`
+	DestinationTitle   string         `db:"destination_title"`
+	CountryCode        string         `db:"country_code"`
+	CityCodes          pq.StringArray `db:"city_codes"`
+	StartDate          string         `db:"start_date"`
+	EndDate            string         `db:"end_date"`
+	DurationDays       int            `db:"duration_days"`
+	ImageURL           string         `db:"image_url"`
+	EstimatedTotalCost float64        `db:"estimated_total_cost"`
+	Currency           string         `db:"currency"`
+	Confidence         string         `db:"confidence"`
+	CashbackAmount     float64        `db:"cashback_amount"`
+	CashbackPercent    float64        `db:"cashback_percent"`
+	MainReason         string         `db:"main_reason"`
+	ReasonLabels       pq.StringArray `db:"reason_labels"`
+	RecommendationType string         `db:"recommendation_type"`
+	Score              float64        `db:"score"`
+}
+
+func (r *Repository) ListRecommendationSeeds() ([]TripRecommendation, error) {
+	if r == nil || r.db == nil {
+		return nil, nil
+	}
+
+	rows := []recommendationSeedRow{}
+	err := r.db.TrackedSelect(&rows, `
+		SELECT
+			trip_id,
+			destination_name,
+			destination_title,
+			country_code,
+			city_codes,
+			COALESCE(start_date::text, '') AS start_date,
+			COALESCE(end_date::text, '') AS end_date,
+			duration_days,
+			COALESCE(image_url, '') AS image_url,
+			estimated_total_cost,
+			currency,
+			confidence,
+			COALESCE(cashback_amount, 0) AS cashback_amount,
+			COALESCE(cashback_percent, 0) AS cashback_percent,
+			main_reason,
+			reason_labels,
+			recommendation_type,
+			score
+		FROM travel_trip_recommendations
+		ORDER BY
+			CASE recommendation_type
+				WHEN 'similar_to_previous' THEN 1
+				WHEN 'opposite_to_previous' THEN 2
+				WHEN 'seasonal' THEN 3
+				WHEN 'event_based' THEN 4
+				ELSE 5
+			END,
+			score DESC,
+			destination_title;
+	`)
+	if err != nil {
+		return nil, err
+	}
+
+	recommendations := make([]TripRecommendation, 0, len(rows))
+	for _, row := range rows {
+		var cashback *CashbackEstimate
+		if row.CashbackAmount > 0 || row.CashbackPercent > 0 {
+			cashback = &CashbackEstimate{
+				Amount:   row.CashbackAmount,
+				Currency: row.Currency,
+				Percent:  row.CashbackPercent,
+			}
+		}
+		recommendations = append(recommendations, TripRecommendation{
+			TripID:             row.TripID,
+			DestinationName:    row.DestinationName,
+			DestinationTitle:   row.DestinationTitle,
+			CountryCode:        row.CountryCode,
+			CityCodes:          append([]string{}, row.CityCodes...),
+			StartDate:          row.StartDate,
+			EndDate:            row.EndDate,
+			DurationDays:       row.DurationDays,
+			ImageURL:           row.ImageURL,
+			EstimatedTotalCost: EstimatedMoney{Amount: row.EstimatedTotalCost, Currency: row.Currency, Confidence: row.Confidence},
+			CashbackEstimate:   cashback,
+			MainReason:         row.MainReason,
+			ReasonLabels:       append([]string{}, row.ReasonLabels...),
+			RecommendationType: row.RecommendationType,
+			Score:              row.Score,
+		})
+	}
+	return recommendations, nil
 }
 
 func (s *CoreService) CreateTrip(ctx context.Context, dto CreateTripDTO) (*PlanningTripResponse, error) {
@@ -441,45 +535,74 @@ func (s *CoreService) GetProfile() *UserProfileResponse {
 }
 
 func (s *CoreService) GetRecommendations() *RecommendationsResponse {
-	recommendations := []TripRecommendation{}
-	type seed struct {
-		country string
-		title   string
-		typ     string
-		score   float64
-		image   string
-	}
-	seeds := []seed{
-		{country: "Japan", title: "Tokyo Family Week", typ: "similar_to_previous", score: 0.91, image: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf"},
-		{country: "Germany", title: "Berlin Smart Escape", typ: "cashback_boosted", score: 0.84, image: "https://images.unsplash.com/photo-1560969184-10fe8719e047"},
-		{country: "Kazakhstan", title: "Almaty Weekend", typ: "weekend_trip", score: 0.8, image: "https://images.unsplash.com/photo-1574493620335-39f03c7f7f2d"},
-	}
 	createdAt := time.Now().UTC().Format(time.RFC3339)
-	for idx, item := range seeds {
-		ref := fallbackDestinationReference(item.country, "")
-		total := estimateTripTotal(ref.CountryName)
+	if recommendations, err := s.repo.ListRecommendationSeeds(); err == nil && len(recommendations) > 0 {
+		return &RecommendationsResponse{UserID: "halyk-user-001", GeneratedAt: createdAt, SelectedMode: "balanced", Recommendations: recommendations}
+	}
+
+	recommendations := fallbackRecommendations()
+	return &RecommendationsResponse{UserID: "halyk-user-001", GeneratedAt: createdAt, SelectedMode: "balanced", Recommendations: recommendations}
+}
+
+func fallbackRecommendations() []TripRecommendation {
+	type seed struct {
+		id          string
+		name        string
+		title       string
+		countryCode string
+		cityCodes   []string
+		start       string
+		end         string
+		days        int
+		image       string
+		total       float64
+		cashback    float64
+		percent     float64
+		reason      string
+		labels      []string
+		typ         string
+		score       float64
+	}
+
+	seeds := []seed{
+		{"rec-similar-tokyo-001", "Tokyo, Japan", "Tokyo family food and culture week", "JP", []string{"TYO"}, "2026-07-10", "2026-07-17", 8, "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf", 905000, 45250, 5.0, "Close to prior culture and food patterns with a family-safe city route.", []string{"Culture", "Food", "Family fit", "Direct path"}, "similar_to_previous", 0.97},
+		{"rec-similar-kyoto-002", "Kyoto, Japan", "Kyoto temples and quiet lanes", "JP", []string{"KIX", "UKY"}, "2026-09-12", "2026-09-18", 7, "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e", 845000, 38025, 4.5, "Matches the user preference for history, walkable days, and calm food districts.", []string{"History", "Quiet", "Walkable", "Seasonal color"}, "similar_to_previous", 0.94},
+		{"rec-similar-istanbul-003", "Istanbul, Turkey", "Istanbul markets and Bosphorus food route", "TR", []string{"IST"}, "2026-06-12", "2026-06-16", 5, "https://images.unsplash.com/photo-1524231757912-21f4fe3a7200", 742000, 31500, 4.2, "Visa-free, direct flight from Almaty, strong food and history match.", []string{"Visa-free", "Food match", "History", "Cashback boost"}, "similar_to_previous", 0.92},
+		{"rec-similar-tbilisi-004", "Tbilisi, Georgia", "Tbilisi old town and wine route", "GE", []string{"TBS"}, "2026-06-20", "2026-06-24", 5, "https://images.unsplash.com/photo-1565008576549-57569a49371d", 586000, 18000, 3.0, "Short flight, familiar cuisine, and easy old town walking days.", []string{"Budget friendly", "Food", "Mountains", "Old town"}, "similar_to_previous", 0.89},
+		{"rec-similar-almaty-005", "Almaty, Kazakhstan", "Almaty mountain reset weekend", "KZ", []string{"ALA"}, "2026-06-27", "2026-06-29", 3, "https://images.unsplash.com/photo-1596367407372-5af9a8b8d67e", 180000, 5500, 3.0, "No visa, no flight stress, and a strong mountain-and-food fit.", []string{"No visa", "Mountains", "Weekend getaway", "Food"}, "similar_to_previous", 0.86},
+		{"rec-new-dubai-001", "Dubai, UAE", "Dubai beach, shopping and desert contrast", "AE", []string{"DXB"}, "2026-07-04", "2026-07-09", 6, "https://images.unsplash.com/photo-1512453979798-5ea266f8880c", 890000, 32000, 3.5, "A brighter luxury-and-desert style that contrasts with prior city history trips.", []string{"Beach", "Shopping", "Desert", "New style"}, "opposite_to_previous", 0.95},
+		{"rec-new-baku-002", "Baku, Azerbaijan", "Baku Caspian design and old city break", "AZ", []string{"GYD"}, "2026-08-08", "2026-08-13", 6, "https://images.unsplash.com/photo-1581007341315-6d53c1f9f7fb", 640000, 22400, 3.5, "Mixes seaside walks, modern architecture, and old city streets in a new pattern.", []string{"Sea", "Architecture", "Old city", "Direct flight"}, "opposite_to_previous", 0.91},
+		{"rec-new-batumi-003", "Batumi, Georgia", "Batumi Black Sea family coast", "GE", []string{"BUS"}, "2026-08-15", "2026-08-20", 6, "https://images.unsplash.com/photo-1565008576549-57569a49371d", 520000, 15600, 3.0, "A sea-first option for a user whose profile is usually city and culture led.", []string{"Sea", "Family", "Budget friendly", "Relaxed"}, "opposite_to_previous", 0.88},
+		{"rec-new-doha-004", "Doha, Qatar", "Doha museums, souq and warm winter sun", "QA", []string{"DOH"}, "2026-11-05", "2026-11-10", 6, "https://images.unsplash.com/photo-1629126791508-92c68ba0e8d2", 820000, 28700, 3.5, "A polished Gulf city route with a different climate, pace, and museum style.", []string{"Museums", "Warm weather", "Souq", "New style"}, "opposite_to_previous", 0.85},
+		{"rec-new-seoul-005", "Seoul, South Korea", "Seoul pop culture and palaces route", "KR", []string{"SEL"}, "2026-10-03", "2026-10-09", 7, "https://images.unsplash.com/photo-1538485399081-7191377e8241", 965000, 38600, 4.0, "Adds a trendier city-energy route with shopping, media culture, and palace walks.", []string{"Shopping", "Culture", "Food", "City energy"}, "opposite_to_previous", 0.82},
+		{"rec-seasonal-sapporo-001", "Sapporo, Japan", "Sapporo snow festival and winter food", "JP", []string{"CTS"}, "2026-02-05", "2026-02-11", 7, "https://images.unsplash.com/photo-1516563670759-299070f0dc54", 930000, 37200, 4.0, "Timed around winter festival energy, snow scenery, and regional comfort food.", []string{"Seasonal", "Winter", "Food", "Festival"}, "seasonal", 0.96},
+		{"rec-seasonal-munich-002", "Munich, Germany", "Munich autumn parks and museum week", "DE", []string{"MUC"}, "2026-09-19", "2026-09-25", 7, "https://images.unsplash.com/photo-1595867818082-083862f3d630", 870000, 34800, 4.0, "Autumn timing fits parks, museums, and calmer family city days.", []string{"Seasonal", "Autumn", "Museums", "Parks"}, "seasonal", 0.92},
+		{"rec-seasonal-astana-003", "Astana, Kazakhstan", "Astana summer architecture weekend", "KZ", []string{"NQZ"}, "2026-07-18", "2026-07-21", 4, "https://images.unsplash.com/photo-1577086664693-894d8405334a", 240000, 7200, 3.0, "Best in warmer months for river walks, modern architecture, and short domestic travel.", []string{"Seasonal", "Weekend", "No visa", "Architecture"}, "seasonal", 0.88},
+		{"rec-event-berlin-004", "Berlin, Germany", "Berlin summer museums and open-air events", "DE", []string{"BER"}, "2026-08-01", "2026-08-07", 7, "https://images.unsplash.com/photo-1560969184-10fe8719e047", 835000, 33400, 4.0, "Event-friendly summer timing with museums, public squares, and evening culture.", []string{"Events", "Museums", "Summer", "Culture"}, "event_based", 0.85},
+		{"rec-event-almaty-005", "Almaty, Kazakhstan", "Almaty concerts and mountain day plan", "KZ", []string{"ALA"}, "2026-08-22", "2026-08-25", 4, "https://images.unsplash.com/photo-1596367407372-5af9a8b8d67e", 220000, 8800, 4.0, "Combines likely city events with an easy mountain day for a timely local plan.", []string{"Events", "Mountains", "No visa", "Weekend"}, "event_based", 0.82},
+	}
+
+	recommendations := make([]TripRecommendation, 0, len(seeds))
+	for _, item := range seeds {
 		recommendations = append(recommendations, TripRecommendation{
-			TripID:           fmt.Sprintf("rec-%d", idx+1),
-			DestinationTitle: item.title,
-			CountryCode:      countryCodeForCountry(ref.CountryName),
-			CityCodes:        []string{strings.ToUpper(firstN(ref.CityName, 3))},
-			StartDate:        "2026-07-10",
-			EndDate:          "2026-07-17",
-			DurationDays:     7,
-			ImageURL:         item.image,
-			EstimatedTotalCost: EstimatedMoney{
-				Amount:     float64(total),
-				Currency:   "KZT",
-				Confidence: "medium",
-			},
-			CashbackEstimate:   &CashbackEstimate{Amount: math.Round(float64(total) * 0.05), Currency: "KZT", Percent: 5},
-			MainReason:         "Pre-assembled recommendation based on travel profile, cost fit, and destination style.",
-			ReasonLabels:       []string{"Direct path", "Family fit", "Smart cashback"},
+			TripID:             item.id,
+			DestinationName:    item.name,
+			DestinationTitle:   item.title,
+			CountryCode:        item.countryCode,
+			CityCodes:          item.cityCodes,
+			StartDate:          item.start,
+			EndDate:            item.end,
+			DurationDays:       item.days,
+			ImageURL:           item.image,
+			EstimatedTotalCost: EstimatedMoney{Amount: item.total, Currency: "KZT", Confidence: "medium"},
+			CashbackEstimate:   &CashbackEstimate{Amount: item.cashback, Currency: "KZT", Percent: item.percent},
+			MainReason:         item.reason,
+			ReasonLabels:       item.labels,
 			RecommendationType: item.typ,
 			Score:              item.score,
 		})
 	}
-	return &RecommendationsResponse{UserID: "halyk-user-001", GeneratedAt: createdAt, SelectedMode: "balanced", Recommendations: recommendations}
+	return recommendations
 }
 
 func (s *CoreService) GetHotelDetails(hotelID string) (*HotelDetailsFull, error) {

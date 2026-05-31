@@ -34,18 +34,6 @@ struct RecommendationCard: View {
                     .font(.largeTitle)
                     .bold()
                     .foregroundStyle(.white)
-                    .overlay(alignment: .topTrailing) {
-                        if let cashback = recommendation.cashbackEstimate {
-                            Text(cashback.displayString)
-                                .font(.footnote)
-                                .fontWeight(.semibold)
-                                .padding(8)
-                                .background {
-                                    Capsule().foregroundStyle(.white)
-                                }
-                                .offset(x: 20, y: -20)
-                        }
-                    }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(16)

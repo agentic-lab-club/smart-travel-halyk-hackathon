@@ -20,8 +20,8 @@ struct FlightDetailView: View {
         (0..<childCount).map { Traveler(index: adultCount + $0, kind: .child, number: $0 + 1) }
     }
 
-    private var classOptions: [PlaneClassOption] { MockTravelData.planeClassOptions }
-    private var allSeats: [PlaneSeat] { MockTravelData.planeSeatMap }
+    private var classOptions: [PlaneClassOption] { PlaneClassOption.makeOptions(for: flight) }
+    private var allSeats: [PlaneSeat] { PlaneSeat.makeSeatMap(for: flight) }
 
     private var currentOption: PlaneClassOption {
         classOptions.first { $0.id == selectedClass } ?? classOptions[0]

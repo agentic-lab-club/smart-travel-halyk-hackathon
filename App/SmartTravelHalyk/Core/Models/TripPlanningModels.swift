@@ -12,6 +12,29 @@ struct PlanningTripResponse: Decodable {
     let readyForConfirmation: Bool
     let chatEntrypoints: [String]
     let updatedAt: String
+
+    private enum CodingKeys: String, CodingKey {
+        case tripId
+        case status
+        case title
+        case normalizedFields
+        case missingFields
+        case readyForConfirmation
+        case chatEntrypoints
+        case updatedAt
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        tripId = try container.decode(String.self, forKey: .tripId)
+        status = try container.decodeIfPresent(String.self, forKey: .status) ?? "draft"
+        title = try container.decodeIfPresent(String.self, forKey: .title) ?? ""
+        normalizedFields = try container.decodeIfPresent([String: JSONValue].self, forKey: .normalizedFields) ?? [:]
+        missingFields = try container.decodeIfPresent([MissingField].self, forKey: .missingFields) ?? []
+        readyForConfirmation = try container.decodeIfPresent(Bool.self, forKey: .readyForConfirmation) ?? false
+        chatEntrypoints = try container.decodeIfPresent([String].self, forKey: .chatEntrypoints) ?? []
+        updatedAt = try container.decodeIfPresent(String.self, forKey: .updatedAt) ?? ""
+    }
 }
 
 struct MissingField: Codable, Equatable, Identifiable, Hashable {
@@ -20,6 +43,26 @@ struct MissingField: Codable, Equatable, Identifiable, Hashable {
     let key: String
     let label: String
     let prompt: String
+
+    private enum CodingKeys: String, CodingKey {
+        case key
+        case label
+        case prompt
+    }
+
+    init(key: String, label: String, prompt: String) {
+        self.key = key
+        self.label = label
+        self.prompt = prompt
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let decodedKey = try container.decode(String.self, forKey: .key)
+        let decodedLabel = try container.decodeIfPresent(String.self, forKey: .label) ?? decodedKey
+        let decodedPrompt = try container.decodeIfPresent(String.self, forKey: .prompt) ?? "Enter \(decodedLabel)"
+        self.init(key: decodedKey, label: decodedLabel, prompt: decodedPrompt)
+    }
 }
 
 enum JSONValue: Decodable, Equatable {
@@ -89,6 +132,21 @@ struct PlanningChatResponse: Decodable {
     let sessionId: String
     let messages: [PlanningMessage]
     let assistantHints: [String]
+
+    private enum CodingKeys: String, CodingKey {
+        case trip
+        case sessionId
+        case messages
+        case assistantHints
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        trip = try container.decode(PlanningTripResponse.self, forKey: .trip)
+        sessionId = try container.decode(String.self, forKey: .sessionId)
+        messages = try container.decodeIfPresent([PlanningMessage].self, forKey: .messages) ?? []
+        assistantHints = try container.decodeIfPresent([String].self, forKey: .assistantHints) ?? []
+    }
 }
 
 struct PlanningMessage: Decodable, Identifiable {

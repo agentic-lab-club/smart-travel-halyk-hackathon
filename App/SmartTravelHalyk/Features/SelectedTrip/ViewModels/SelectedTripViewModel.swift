@@ -61,12 +61,9 @@ final class SelectedTripViewModel {
         return h
     }
 
-    /// Async-loaded full hotel details. Falls back to the mock until a real load completes.
     private(set) var loadedHotelFull: HotelDetailsFull?
 
-    var hotelFullDetails: HotelDetailsFull? {
-        loadedHotelFull ?? (hotelDetails != nil ? MockTravelData.hotelDetailsFull : nil)
-    }
+    var hotelFullDetails: HotelDetailsFull? { loadedHotelFull }
 
     func loadHotelDetails(apiClient: TravelAPIClient) async {
         guard let hotelId = hotelDetails?.hotelId else { return }

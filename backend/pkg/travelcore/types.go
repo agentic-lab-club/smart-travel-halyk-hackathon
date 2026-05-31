@@ -297,6 +297,7 @@ type RecommendationsResponse struct {
 
 type TripRecommendation struct {
 	TripID             string            `json:"tripId"`
+	DestinationName    string            `json:"destinationName"`
 	DestinationTitle   string            `json:"destinationTitle"`
 	CountryCode        string            `json:"countryCode"`
 	CityCodes          []string          `json:"cityCodes"`

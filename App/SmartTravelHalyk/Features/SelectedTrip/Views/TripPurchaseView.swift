@@ -411,7 +411,7 @@ struct TripPurchaseView: View {
                         ProgressView()
                             .tint(.white)
                     } else {
-                        Image(systemName: "lock.fill")
+                        Image(systemName: "basket.fill")
                     }
                     Text(viewModel.isPurchasing ? "Booking…" : "Book — \(viewModel.grandTotal.displayString)")
                         .font(.headline)

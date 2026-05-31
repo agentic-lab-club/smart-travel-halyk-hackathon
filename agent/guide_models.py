@@ -93,3 +93,20 @@ class AgentResponse(BaseModel):
     answer: str
     raw_text: str
     context: dict[str, Any] = Field(default_factory=dict)
+
+
+class AgentHistoryMessage(BaseModel):
+    id: int
+    user_id: int
+    session_id: str
+    role: str
+    content: str
+    input_text: Optional[str] = None
+    answer: Optional[str] = None
+    created_at: str
+
+
+class AgentHistoryResponse(BaseModel):
+    user_id: int
+    session_id: str
+    messages: list[AgentHistoryMessage]

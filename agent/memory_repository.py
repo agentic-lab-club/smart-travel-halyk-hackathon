@@ -109,6 +109,48 @@ def fetch_answer_memory(user_id: int, session_id: str) -> list[dict[str, Any]]:
     return list(reversed(rows))
 
 
+def fetch_session_messages(user_id: int, session_id: str, limit: int = 50) -> list[dict[str, Any]]:
+    from psycopg2.extras import RealDictCursor
+
+    normalized_session = session_key(session_id)
+    conn = get_connection()
+    try:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            init_agent_memory_tables(cur)
+            rows = _fetch_rows(
+                cur,
+                """
+                SELECT
+                    id,
+                    user_id,
+                    session_id::text AS session_id,
+                    role,
+                    content,
+                    input_text,
+                    answer,
+                    created_at
+                FROM agent_chat_messages
+                WHERE user_id = %(user_id)s
+                  AND session_id = %(session_id)s::uuid
+                ORDER BY id DESC
+                LIMIT %(limit)s;
+                """,
+                {
+                    "user_id": user_id,
+                    "session_id": normalized_session,
+                    "limit": limit,
+                },
+            )
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+    return list(reversed(rows))
+
+
 def save_answer_memory(
     user_id: int,
     session_id: str,

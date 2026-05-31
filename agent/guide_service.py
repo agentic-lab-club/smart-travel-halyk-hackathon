@@ -10,10 +10,10 @@ from typing import Any, Callable, Optional
 from uuid import UUID
 
 from db import get_connection
-from guide_models import AgentParsedQuery, AgentRequest, AgentResponse
+from guide_models import AgentHistoryMessage, AgentHistoryResponse, AgentParsedQuery, AgentRequest, AgentResponse
 from guide_prompts import AGENT_QUERY_EXTRACT_PROMPT, PLACE_AGENT_SYSTEM_PROMPT
 from llm_client import DeepSeekGateway
-from memory_repository import fetch_answer_memory, save_answer_memory, session_key
+from memory_repository import fetch_answer_memory, fetch_session_messages, save_answer_memory, session_key
 
 logger = logging.getLogger(__name__)
 
@@ -25,10 +25,12 @@ class GuideService:
         *,
         answer_memory_fetcher: Callable[[int, str], list[dict[str, Any]]] = fetch_answer_memory,
         answer_memory_saver: Callable[[int, str, str, str], list[dict[str, Any]]] = save_answer_memory,
+        session_messages_fetcher: Callable[[int, str], list[dict[str, Any]]] = fetch_session_messages,
     ) -> None:
         self.llm_gateway = llm_gateway or DeepSeekGateway()
         self.answer_memory_fetcher = answer_memory_fetcher
         self.answer_memory_saver = answer_memory_saver
+        self.session_messages_fetcher = session_messages_fetcher
 
     def ask(self, request: AgentRequest) -> AgentResponse:
         answer_memory = self.answer_memory_fetcher(request.user_id, request.session_id)
@@ -70,6 +72,14 @@ class GuideService:
                     "last_answers": updated_answer_memory,
                 },
             },
+        )
+
+    def history(self, user_id: int, session_id: str) -> AgentHistoryResponse:
+        rows = self.session_messages_fetcher(user_id, session_id)
+        return AgentHistoryResponse(
+            user_id=user_id,
+            session_id=session_key(session_id),
+            messages=[AgentHistoryMessage(**row) for row in rows],
         )
 
 
