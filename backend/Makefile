@@ -5,6 +5,7 @@ BACKEND_SERVICE_NAME=golang
 
 # for localhost usage!
 NAMED_COMPOSE_FILE = docker-compose.yml
+INTEGRATION_COMPOSE_FILES = -f docker-compose.yml -f docker-compose.integration.yml
 
 
 ## -------------------------
@@ -35,6 +36,14 @@ test: ## Run Go tests inside docker
 test-build: ## Build the test image (after deps changes)
 	@docker compose -f $(NAMED_COMPOSE_FILE) build golang-test
 
+integration-test-build: ## Build backend test image and full integration stack images
+	@docker compose $(INTEGRATION_COMPOSE_FILES) build golang-test golang-integration agent
+
+integration-test: ## Run full backend + agent integration suite
+	@docker compose $(INTEGRATION_COMPOSE_FILES) up -d postgres agent golang-integration
+	@docker compose $(INTEGRATION_COMPOSE_FILES) run --rm --no-deps golang-test go test -tags=integration ./tests/integration
+	@docker compose $(INTEGRATION_COMPOSE_FILES) down
+
 sh:
 	@docker compose -f $(NAMED_COMPOSE_FILE) exec -it $(BACKEND_SERVICE_NAME) sh
 
@@ -46,4 +55,4 @@ swagger:
 #psql:
 #	@docker compose -f $(NAMED_COMPOSE_FILE) exec -it $(DATABASE_SERVICE_NAME) psql -d directus_dev -U directus_dev
 
-.PHONY: up down build logs rebuild sh swagger test test-build yc-push-staging yc-push-prod yc-setup yc-list-images verify-build install-hooks
+.PHONY: up down build logs rebuild sh swagger test test-build integration-test-build integration-test yc-push-staging yc-push-prod yc-setup yc-list-images verify-build install-hooks

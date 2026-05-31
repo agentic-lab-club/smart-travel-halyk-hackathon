@@ -1,0 +1,44 @@
+services:
+  agent:
+    build:
+      context: ../agent
+      dockerfile: Dockerfile
+    container_name: smart_travel_agent_integration
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  golang-integration:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runner
+    container_name: golang_integration
+    env_file:
+      - .env
+    command: ["-config=local"]
+    volumes:
+      - ./config:/app/config:ro
+    ports: []
+    depends_on:
+      postgres:
+        condition: service_healthy
+      agent:
+        condition: service_healthy
+    environment:
+      AI_AGENT_URL: http://agent:8000
+
+  golang-test:
+    environment:
+      INTEGRATION_BACKEND_URL: http://golang-integration:8080
+      INTEGRATION_AGENT_URL: http://agent:8000
+      AI_AGENT_URL: http://agent:8000

@@ -43,6 +43,26 @@ Then open:
 http://localhost:8080/docs
 ```
 
+## Full Integration Suite
+
+For the full `mobile-consumer -> backend -> agent` wiring check, run:
+
+```bash
+make integration-test-build
+make integration-test
+```
+
+This suite:
+
+- starts `postgres`, `backend`, and `agent`
+- validates `/parse-trip` on the live agent
+- validates the full planning flow under `/api/v1/trips/*`
+- validates mobile-facing endpoints:
+  - `/api/v1/user-profile`
+  - `/api/v1/recommendations`
+  - `/api/v1/trips/{tripId}`
+  - `/api/v1/hotels/{hotelId}`
+
 ## Development Notes
 
 - Add new feature modules under `internal/<module>`

@@ -106,9 +106,72 @@
                 }
             }
         },
+        "/api/v1/hotels/{hotelId}": {
+            "get": {
+                "description": "Returns the full hotel details model expected by mobile.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "@hoteldetails"
+                ],
+                "summary": "Get hotel details",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Hotel ID",
+                        "name": "hotelId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/hoteldetails.HotelDetailsFull"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/recommendations": {
+            "get": {
+                "description": "Returns recommendation cards formatted for the mobile entry flow.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "@recommendations"
+                ],
+                "summary": "Get recommendations",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/recommendations.RecommendationsResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/trips": {
             "post": {
-                "description": "Creates a new trip draft and initializes chat session state.",
+                "description": "Creates a new trip draft and returns planning-state JSON for mobile.",
                 "consumes": [
                     "application/json"
                 ],
@@ -116,7 +179,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "@trip"
+                    "@tripplanning"
                 ],
                 "summary": "Create trip draft",
                 "parameters": [
@@ -126,7 +189,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/trip.CreateTripDTO"
+                            "$ref": "#/definitions/tripplanning.CreateTripDTO"
                         }
                     }
                 ],
@@ -134,7 +197,7 @@
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/trip.TripDetailsResponse"
+                            "$ref": "#/definitions/tripplanning.PlanningTripResponse"
                         }
                     },
                     "400": {
@@ -156,14 +219,14 @@
         },
         "/api/v1/trips/{tripId}": {
             "get": {
-                "description": "Returns the aggregate trip response for dashboard rendering.",
+                "description": "Returns the final mobile-ready trip bundle for a generated trip.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "@trip"
+                    "@tripdetails"
                 ],
-                "summary": "Get trip details",
+                "summary": "Get generated trip details",
                 "parameters": [
                     {
                         "type": "string",
@@ -177,7 +240,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/trip.TripDetailsResponse"
+                            "$ref": "#/definitions/tripdetails.TripDetailsResponse"
                         }
                     },
                     "404": {
@@ -197,7 +260,7 @@
                 }
             },
             "patch": {
-                "description": "Updates trip-level fields collected before confirmation and generation.",
+                "description": "Updates normalized planning fields before final confirmation.",
                 "consumes": [
                     "application/json"
                 ],
@@ -205,9 +268,9 @@
                     "application/json"
                 ],
                 "tags": [
-                    "@trip"
+                    "@tripplanning"
                 ],
-                "summary": "Update trip draft fields",
+                "summary": "Patch planning fields",
                 "parameters": [
                     {
                         "type": "string",
@@ -222,7 +285,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/trip.PatchTripDTO"
+                            "$ref": "#/definitions/tripplanning.PatchTripDTO"
                         }
                     }
                 ],
@@ -230,7 +293,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/trip.TripDetailsResponse"
+                            "$ref": "#/definitions/tripplanning.PlanningTripResponse"
                         }
                     },
                     "400": {
@@ -259,7 +322,7 @@
         },
         "/api/v1/trips/{tripId}/activities": {
             "post": {
-                "description": "Adds a place or event item to the trip and updates dashboard state.",
+                "description": "Adds a new manual activity into the generated trip bundle.",
                 "consumes": [
                     "application/json"
                 ],
@@ -267,7 +330,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "@trip"
+                    "@tripdetails"
                 ],
                 "summary": "Add activity manually",
                 "parameters": [
@@ -284,7 +347,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/trip.ManualActivityDTO"
+                            "$ref": "#/definitions/tripdetails.ManualActivityDTO"
                         }
                     }
                 ],
@@ -292,7 +355,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/trip.TripDetailsResponse"
+                            "$ref": "#/definitions/tripdetails.TripDetailsResponse"
                         }
                     },
                     "400": {
@@ -321,14 +384,14 @@
         },
         "/api/v1/trips/{tripId}/budget": {
             "get": {
-                "description": "Returns aggregate trip costs, cashback, bonus, and offer fields.",
+                "description": "Returns the budget breakdown in mobile contract format.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "@trip"
+                    "@tripdetails"
                 ],
-                "summary": "Get budget summary",
+                "summary": "Get budget breakdown",
                 "parameters": [
                     {
                         "type": "string",
@@ -342,7 +405,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/trip.BudgetSummary"
+                            "$ref": "#/definitions/tripdetails.BudgetBreakdown"
                         }
                     },
                     "404": {
@@ -364,14 +427,14 @@
         },
         "/api/v1/trips/{tripId}/chat/messages": {
             "get": {
-                "description": "Returns the current chat history attached to a trip planning session.",
+                "description": "Returns planning chat history together with the current planning state.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "@trip"
+                    "@tripplanning"
                 ],
-                "summary": "Get trip chat history",
+                "summary": "Get planning chat history",
                 "parameters": [
                     {
                         "type": "string",
@@ -385,7 +448,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/trip.ChatResponse"
+                            "$ref": "#/definitions/tripplanning.PlanningChatResponse"
                         }
                     },
                     "404": {
@@ -405,7 +468,7 @@
                 }
             },
             "post": {
-                "description": "Adds a user message to the trip planning session and returns AI chat output.",
+                "description": "Sends a planning prompt or missing-field answer and returns updated planning chat state.",
                 "consumes": [
                     "application/json"
                 ],
@@ -413,7 +476,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "@trip"
+                    "@tripplanning"
                 ],
                 "summary": "Send planning chat message",
                 "parameters": [
@@ -430,7 +493,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/trip.ChatMessageDTO"
+                            "$ref": "#/definitions/tripplanning.ChatMessageDTO"
                         }
                     }
                 ],
@@ -438,7 +501,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/trip.ChatResponse"
+                            "$ref": "#/definitions/tripplanning.PlanningChatResponse"
                         }
                     },
                     "400": {
@@ -467,14 +530,14 @@
         },
         "/api/v1/trips/{tripId}/confirm": {
             "post": {
-                "description": "Confirms collected fields and generates the master-plan dashboard response.",
+                "description": "Confirms collected fields and returns the generated mobile-ready trip bundle.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "@trip"
+                    "@tripplanning"
                 ],
-                "summary": "Confirm trip and generate plan",
+                "summary": "Confirm trip and generate final bundle",
                 "parameters": [
                     {
                         "type": "string",
@@ -488,7 +551,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/trip.TripDetailsResponse"
+                            "$ref": "#/definitions/tripplanning.TripDetailsResponse"
                         }
                     },
                     "404": {
@@ -510,12 +573,12 @@
         },
         "/api/v1/trips/{tripId}/options/hotels": {
             "get": {
-                "description": "Returns selected and alternative hotel options for a trip.",
+                "description": "Returns selected and alternative hotel options for a generated trip.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "@trip"
+                    "@tripdetails"
                 ],
                 "summary": "Get hotel options",
                 "parameters": [
@@ -533,7 +596,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/trip.HotelOption"
+                                "$ref": "#/definitions/tripdetails.HotelOption"
                             }
                         }
                     },
@@ -556,12 +619,12 @@
         },
         "/api/v1/trips/{tripId}/options/hotels/{optionId}/select": {
             "post": {
-                "description": "Replaces the currently selected hotel option and recalculates budget.",
+                "description": "Updates the generated trip using a different hotel option.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "@trip"
+                    "@tripdetails"
                 ],
                 "summary": "Select hotel option",
                 "parameters": [
@@ -584,7 +647,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/trip.TripDetailsResponse"
+                            "$ref": "#/definitions/tripdetails.TripDetailsResponse"
                         }
                     },
                     "404": {
@@ -606,12 +669,12 @@
         },
         "/api/v1/trips/{tripId}/options/transport": {
             "get": {
-                "description": "Returns selected and alternative transport options for a trip.",
+                "description": "Returns selected and alternative transport options for a generated trip.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "@trip"
+                    "@tripdetails"
                 ],
                 "summary": "Get transport options",
                 "parameters": [
@@ -629,7 +692,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/trip.TransportOption"
+                                "$ref": "#/definitions/tripdetails.TransportOption"
                             }
                         }
                     },
@@ -652,12 +715,12 @@
         },
         "/api/v1/trips/{tripId}/options/transport/{optionId}/select": {
             "post": {
-                "description": "Replaces the currently selected transport option and recalculates budget.",
+                "description": "Updates the generated trip using a different transport option.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "@trip"
+                    "@tripdetails"
                 ],
                 "summary": "Select transport option",
                 "parameters": [
@@ -680,7 +743,50 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/trip.TripDetailsResponse"
+                            "$ref": "#/definitions/tripdetails.TripDetailsResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/trips/{tripId}/planning": {
+            "get": {
+                "description": "Returns current draft, normalized fields, and missing fields for a trip.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "@tripplanning"
+                ],
+                "summary": "Get planning state",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Trip ID",
+                        "name": "tripId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/tripplanning.PlanningTripResponse"
                         }
                     },
                     "404": {
@@ -702,14 +808,14 @@
         },
         "/api/v1/trips/{tripId}/regenerate": {
             "post": {
-                "description": "Regenerates trip details from current stored state and chat context.",
+                "description": "Rebuilds the final trip bundle from the current confirmed planning state.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "@trip"
+                    "@tripplanning"
                 ],
-                "summary": "Regenerate trip plan",
+                "summary": "Regenerate final trip bundle",
                 "parameters": [
                     {
                         "type": "string",
@@ -723,7 +829,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/trip.TripDetailsResponse"
+                            "$ref": "#/definitions/tripplanning.TripDetailsResponse"
                         }
                     },
                     "404": {
@@ -745,12 +851,12 @@
         },
         "/api/v1/trips/{tripId}/reviews": {
             "get": {
-                "description": "Returns AI-produced review summaries and source links for hotels, places, and events.",
+                "description": "Returns lightweight review summaries linked to the trip bundle.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "@trip"
+                    "@tripdetails"
                 ],
                 "summary": "Get review summaries",
                 "parameters": [
@@ -768,7 +874,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/trip.ReviewSummary"
+                                "$ref": "#/definitions/tripdetails.ReviewSummary"
                             }
                         }
                     },
@@ -791,14 +897,14 @@
         },
         "/api/v1/trips/{tripId}/visa": {
             "get": {
-                "description": "Returns visa assistant information for the selected destination.",
+                "description": "Returns the trip visa summary in mobile contract format.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "@trip"
+                    "@tripdetails"
                 ],
-                "summary": "Get visa info",
+                "summary": "Get visa summary",
                 "parameters": [
                     {
                         "type": "string",
@@ -812,7 +918,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/trip.VisaInfo"
+                            "$ref": "#/definitions/tripdetails.VisaInfo"
                         }
                     },
                     "404": {
@@ -827,6 +933,26 @@
                         "schema": {
                             "type": "object",
                             "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/user-profile": {
+            "get": {
+                "description": "Returns the mobile personalization profile used for recommendations and planning defaults.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "@profile"
+                ],
+                "summary": "Get user profile",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/profile.UserProfileResponse"
                         }
                     }
                 }
@@ -876,6 +1002,1055 @@
         "healthcheck.ReadinessResponse": {
             "type": "object",
             "properties": {
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "hoteldetails.HotelDetailsFull": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "city": {
+                    "type": "string"
+                },
+                "district": {
+                    "type": "string"
+                },
+                "hotelId": {
+                    "type": "string"
+                },
+                "lat": {
+                    "type": "number"
+                },
+                "lng": {
+                    "type": "number"
+                },
+                "locationInfo": {
+                    "$ref": "#/definitions/travelcore.HotelLocationInfo"
+                },
+                "mainImageUrl": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "rating": {
+                    "$ref": "#/definitions/travelcore.HotelRating"
+                },
+                "reason": {
+                    "type": "string"
+                },
+                "reviewSummary": {
+                    "$ref": "#/definitions/travelcore.HotelReviewSummary"
+                },
+                "reviewsBySource": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/travelcore.HotelReviewsSourceGroup"
+                    }
+                },
+                "roomOptions": {
+                    "$ref": "#/definitions/travelcore.HotelRoomOptions"
+                },
+                "rooms": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/travelcore.HotelRoom"
+                    }
+                },
+                "selectedRoomId": {
+                    "type": "string"
+                },
+                "sourceRatings": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/travelcore.HotelSourceRating"
+                    }
+                },
+                "stars": {
+                    "type": "integer"
+                }
+            }
+        },
+        "profile.UserProfileResponse": {
+            "type": "object",
+            "properties": {
+                "citizenship": {
+                    "type": "string"
+                },
+                "currency": {
+                    "type": "string"
+                },
+                "homeAirport": {
+                    "type": "string"
+                },
+                "homeCity": {
+                    "type": "string"
+                },
+                "preferredLanguage": {
+                    "type": "string"
+                },
+                "travelProfile": {
+                    "$ref": "#/definitions/travelcore.TravelProfile"
+                },
+                "userId": {
+                    "type": "string"
+                }
+            }
+        },
+        "recommendations.RecommendationsResponse": {
+            "type": "object",
+            "properties": {
+                "generatedAt": {
+                    "type": "string"
+                },
+                "recommendations": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/travelcore.TripRecommendation"
+                    }
+                },
+                "selectedMode": {
+                    "type": "string"
+                },
+                "userId": {
+                    "type": "string"
+                }
+            }
+        },
+        "travelcore.AlternativeRoute": {
+            "type": "object",
+            "properties": {
+                "durationMinutes": {
+                    "type": "integer"
+                },
+                "estimatedCost": {
+                    "$ref": "#/definitions/travelcore.Money"
+                },
+                "reason": {
+                    "type": "string"
+                },
+                "transportType": {
+                    "type": "string"
+                }
+            }
+        },
+        "travelcore.BudgetBreakdown": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/travelcore.BudgetItem"
+                    }
+                },
+                "total": {
+                    "$ref": "#/definitions/travelcore.EstimatedMoney"
+                }
+            }
+        },
+        "travelcore.BudgetItem": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "category": {
+                    "type": "string"
+                },
+                "currency": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "travelcore.CashbackEstimate": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "currency": {
+                    "type": "string"
+                },
+                "percent": {
+                    "type": "number"
+                }
+            }
+        },
+        "travelcore.CashbackInfo": {
+            "type": "object",
+            "properties": {
+                "basePercent": {
+                    "type": "number"
+                },
+                "boostedPercent": {
+                    "type": "number"
+                },
+                "estimatedTotal": {
+                    "$ref": "#/definitions/travelcore.Money"
+                },
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/travelcore.CashbackItem"
+                    }
+                }
+            }
+        },
+        "travelcore.CashbackItem": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "category": {
+                    "type": "string"
+                },
+                "condition": {
+                    "type": "string"
+                },
+                "currency": {
+                    "type": "string"
+                }
+            }
+        },
+        "travelcore.ChallengeProgress": {
+            "type": "object",
+            "properties": {
+                "current": {
+                    "type": "number"
+                },
+                "target": {
+                    "type": "number"
+                },
+                "unit": {
+                    "type": "string"
+                }
+            }
+        },
+        "travelcore.ChallengeReward": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "$ref": "#/definitions/travelcore.Money"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "valuePercent": {
+                    "type": "number"
+                }
+            }
+        },
+        "travelcore.Coordinates": {
+            "type": "object",
+            "properties": {
+                "lat": {
+                    "type": "number"
+                },
+                "lng": {
+                    "type": "number"
+                }
+            }
+        },
+        "travelcore.EstimatedMoney": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "confidence": {
+                    "type": "string"
+                },
+                "currency": {
+                    "type": "string"
+                }
+            }
+        },
+        "travelcore.HotelLocationInfo": {
+            "type": "object",
+            "properties": {
+                "averageTaxiToActivities": {
+                    "$ref": "#/definitions/travelcore.Money"
+                },
+                "convenienceScore": {
+                    "type": "number"
+                },
+                "distanceToAirportKm": {
+                    "type": "number"
+                },
+                "distanceToMainClusterKm": {
+                    "type": "number"
+                },
+                "locationScore": {
+                    "type": "number"
+                },
+                "priceScore": {
+                    "type": "number"
+                },
+                "taxiFromAirport": {
+                    "$ref": "#/definitions/travelcore.Money"
+                },
+                "walkablePlacesCount": {
+                    "type": "integer"
+                }
+            }
+        },
+        "travelcore.HotelRating": {
+            "type": "object",
+            "properties": {
+                "label": {
+                    "type": "string"
+                },
+                "overall": {
+                    "type": "number"
+                },
+                "reviewCount": {
+                    "type": "integer"
+                },
+                "scale": {
+                    "type": "number"
+                }
+            }
+        },
+        "travelcore.HotelReview": {
+            "type": "object",
+            "properties": {
+                "authorName": {
+                    "type": "string"
+                },
+                "cons": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "date": {
+                    "type": "string"
+                },
+                "language": {
+                    "type": "string"
+                },
+                "pros": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "rating": {
+                    "type": "number"
+                },
+                "reviewId": {
+                    "type": "string"
+                },
+                "scale": {
+                    "type": "number"
+                },
+                "text": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "travelcore.HotelReviewSummary": {
+            "type": "object",
+            "properties": {
+                "basedOnSources": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "bestFor": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "confidence": {
+                    "type": "string"
+                },
+                "negativePoints": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "notIdealFor": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "positivePoints": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "shortSummary": {
+                    "type": "string"
+                }
+            }
+        },
+        "travelcore.HotelReviewsSourceGroup": {
+            "type": "object",
+            "properties": {
+                "averageRating": {
+                    "type": "number"
+                },
+                "reviews": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/travelcore.HotelReview"
+                    }
+                },
+                "scale": {
+                    "type": "number"
+                },
+                "source": {
+                    "type": "string"
+                },
+                "totalReviews": {
+                    "type": "integer"
+                }
+            }
+        },
+        "travelcore.HotelRoom": {
+            "type": "object",
+            "properties": {
+                "areaSqm": {
+                    "type": "number"
+                },
+                "bedType": {
+                    "type": "string"
+                },
+                "breakfastIncluded": {
+                    "type": "boolean"
+                },
+                "capacity": {
+                    "type": "integer"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "imageUrl": {
+                    "type": "string"
+                },
+                "labels": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "pricePerNight": {
+                    "$ref": "#/definitions/travelcore.Money"
+                },
+                "refundable": {
+                    "type": "boolean"
+                },
+                "roomId": {
+                    "type": "string"
+                },
+                "totalPrice": {
+                    "$ref": "#/definitions/travelcore.Money"
+                },
+                "tradeoffLabel": {
+                    "type": "string"
+                }
+            }
+        },
+        "travelcore.HotelRoomOptions": {
+            "type": "object",
+            "properties": {
+                "downgradeLabel": {
+                    "type": "string"
+                },
+                "downgradeRoomId": {
+                    "type": "string"
+                },
+                "selectedReason": {
+                    "type": "string"
+                },
+                "selectedRoomId": {
+                    "type": "string"
+                },
+                "upgradeLabel": {
+                    "type": "string"
+                },
+                "upgradeRoomId": {
+                    "type": "string"
+                }
+            }
+        },
+        "travelcore.HotelSourceRating": {
+            "type": "object",
+            "properties": {
+                "rating": {
+                    "type": "number"
+                },
+                "reviewCount": {
+                    "type": "integer"
+                },
+                "scale": {
+                    "type": "number"
+                },
+                "source": {
+                    "type": "string"
+                },
+                "url": {
+                    "type": "string"
+                }
+            }
+        },
+        "travelcore.ItinerarySegment": {
+            "type": "object",
+            "properties": {
+                "date": {
+                    "type": "string"
+                },
+                "dayNumber": {
+                    "type": "integer"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "details": {
+                    "$ref": "#/definitions/travelcore.SegmentDetails"
+                },
+                "endTime": {
+                    "type": "string"
+                },
+                "icon": {
+                    "type": "string"
+                },
+                "labels": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "linkedMarkerIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "linkedRouteIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "price": {
+                    "$ref": "#/definitions/travelcore.Money"
+                },
+                "segmentId": {
+                    "type": "string"
+                },
+                "startTime": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                }
+            }
+        },
+        "travelcore.MapCamera": {
+            "type": "object",
+            "properties": {
+                "centerLat": {
+                    "type": "number"
+                },
+                "centerLng": {
+                    "type": "number"
+                },
+                "zoom": {
+                    "type": "number"
+                }
+            }
+        },
+        "travelcore.MapMarker": {
+            "type": "object",
+            "properties": {
+                "icon": {
+                    "type": "string"
+                },
+                "labels": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "lat": {
+                    "type": "number"
+                },
+                "lng": {
+                    "type": "number"
+                },
+                "markerId": {
+                    "type": "string"
+                },
+                "price": {
+                    "$ref": "#/definitions/travelcore.MoneyWithUnit"
+                },
+                "segmentId": {
+                    "type": "string"
+                },
+                "subtitle": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                }
+            }
+        },
+        "travelcore.MapRoute": {
+            "type": "object",
+            "properties": {
+                "alternativeRoutes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/travelcore.AlternativeRoute"
+                    }
+                },
+                "distanceKm": {
+                    "type": "number"
+                },
+                "durationMinutes": {
+                    "type": "integer"
+                },
+                "estimatedCost": {
+                    "$ref": "#/definitions/travelcore.Money"
+                },
+                "fromMarkerId": {
+                    "type": "string"
+                },
+                "polyline": {
+                    "type": "string"
+                },
+                "routeId": {
+                    "type": "string"
+                },
+                "segmentId": {
+                    "type": "string"
+                },
+                "toMarkerId": {
+                    "type": "string"
+                },
+                "transportType": {
+                    "type": "string"
+                }
+            }
+        },
+        "travelcore.MissingField": {
+            "type": "object",
+            "properties": {
+                "key": {
+                    "type": "string"
+                },
+                "label": {
+                    "type": "string"
+                },
+                "prompt": {
+                    "type": "string"
+                }
+            }
+        },
+        "travelcore.ModeVariant": {
+            "type": "object",
+            "properties": {
+                "estimatedTravelTimeMinutes": {
+                    "type": "integer"
+                },
+                "extraCostComparedToBalanced": {
+                    "type": "integer"
+                },
+                "hotelStrategy": {
+                    "type": "string"
+                },
+                "savingsComparedToBalanced": {
+                    "type": "integer"
+                },
+                "totalCost": {
+                    "type": "integer"
+                },
+                "tradeoffLabel": {
+                    "type": "string"
+                },
+                "transportStrategy": {
+                    "type": "string"
+                }
+            }
+        },
+        "travelcore.Money": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "currency": {
+                    "type": "string"
+                }
+            }
+        },
+        "travelcore.MoneyWithUnit": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "currency": {
+                    "type": "string"
+                },
+                "unit": {
+                    "type": "string"
+                }
+            }
+        },
+        "travelcore.PlanningMessage": {
+            "type": "object",
+            "properties": {
+                "action": {
+                    "type": "string"
+                },
+                "content": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "role": {
+                    "type": "string"
+                },
+                "structured": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "any"
+                    }
+                }
+            }
+        },
+        "travelcore.PlanningTripResponse": {
+            "type": "object",
+            "properties": {
+                "chat_entrypoints": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "missing_fields": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/travelcore.MissingField"
+                    }
+                },
+                "normalized_fields": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "any"
+                    }
+                },
+                "ready_for_confirmation": {
+                    "type": "boolean"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "trip_id": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "travelcore.RouteStop": {
+            "type": "object",
+            "properties": {
+                "coordinates": {
+                    "$ref": "#/definitions/travelcore.Coordinates"
+                },
+                "endDate": {
+                    "type": "string"
+                },
+                "startDate": {
+                    "type": "string"
+                },
+                "stopId": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "transportToNext": {
+                    "type": "string"
+                }
+            }
+        },
+        "travelcore.SegmentDetails": {
+            "type": "object",
+            "properties": {
+                "kind": {
+                    "type": "string"
+                },
+                "payload": {
+                    "type": "any"
+                }
+            }
+        },
+        "travelcore.SmartWarning": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                },
+                "segmentId": {
+                    "type": "string"
+                },
+                "severity": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                }
+            }
+        },
+        "travelcore.TravelChallenge": {
+            "type": "object",
+            "properties": {
+                "challengeId": {
+                    "type": "string"
+                },
+                "deadline": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "difficulty": {
+                    "type": "string"
+                },
+                "progress": {
+                    "$ref": "#/definitions/travelcore.ChallengeProgress"
+                },
+                "reason": {
+                    "type": "string"
+                },
+                "reward": {
+                    "$ref": "#/definitions/travelcore.ChallengeReward"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "travelcore.TravelProfile": {
+            "type": "object",
+            "properties": {
+                "avoidCategories": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "budgetLevel": {
+                    "type": "string"
+                },
+                "hotelPreference": {
+                    "type": "string"
+                },
+                "preferredCategories": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "preferredTripLengthDays": {
+                    "type": "integer"
+                },
+                "transportPreference": {
+                    "type": "string"
+                },
+                "travelFrequency": {
+                    "type": "string"
+                }
+            }
+        },
+        "travelcore.TravelerInput": {
+            "type": "object",
+            "required": [
+                "age_group",
+                "type"
+            ],
+            "properties": {
+                "age_group": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "notes": {
+                    "type": "string"
+                },
+                "preferences": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "type": {
+                    "type": "string"
+                }
+            }
+        },
+        "travelcore.TripMap": {
+            "type": "object",
+            "properties": {
+                "initialCamera": {
+                    "$ref": "#/definitions/travelcore.MapCamera"
+                },
+                "markers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/travelcore.MapMarker"
+                    }
+                },
+                "routes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/travelcore.MapRoute"
+                    }
+                }
+            }
+        },
+        "travelcore.TripRecommendation": {
+            "type": "object",
+            "properties": {
+                "cashbackEstimate": {
+                    "$ref": "#/definitions/travelcore.CashbackEstimate"
+                },
+                "cityCodes": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "countryCode": {
+                    "type": "string"
+                },
+                "destinationTitle": {
+                    "type": "string"
+                },
+                "durationDays": {
+                    "type": "integer"
+                },
+                "endDate": {
+                    "type": "string"
+                },
+                "estimatedTotalCost": {
+                    "$ref": "#/definitions/travelcore.EstimatedMoney"
+                },
+                "imageUrl": {
+                    "type": "string"
+                },
+                "mainReason": {
+                    "type": "string"
+                },
+                "reasonLabels": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "recommendationType": {
+                    "type": "string"
+                },
+                "score": {
+                    "type": "number"
+                },
+                "startDate": {
+                    "type": "string"
+                },
+                "tripId": {
+                    "type": "string"
+                }
+            }
+        },
+        "travelcore.TripSummary": {
+            "type": "object",
+            "properties": {
+                "estimatedTotalCashback": {
+                    "$ref": "#/definitions/travelcore.Money"
+                },
+                "estimatedTotalCost": {
+                    "$ref": "#/definitions/travelcore.Money"
+                },
+                "mainLabels": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "visaStatus": {
+                    "type": "string"
+                },
+                "weatherSummary": {
+                    "type": "string"
+                }
+            }
+        },
+        "travelcore.VisaInfo": {
+            "type": "object",
+            "properties": {
+                "citizenship": {
+                    "type": "string"
+                },
+                "confidence": {
+                    "type": "string"
+                },
+                "destinationCountry": {
+                    "type": "string"
+                },
+                "estimatedCost": {
+                    "$ref": "#/definitions/travelcore.Money"
+                },
+                "notes": {
+                    "type": "string"
+                },
+                "processingTimeDays": {
+                    "type": "integer"
+                },
+                "required": {
+                    "type": "boolean"
+                },
                 "status": {
                     "type": "string"
                 }
@@ -1721,6 +2896,493 @@
                 "requirement": {
                     "type": "string",
                     "example": "Prototype shows a visa-assistant style checklist"
+                }
+            }
+        },
+        "tripdetails.BudgetBreakdown": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/travelcore.BudgetItem"
+                    }
+                },
+                "total": {
+                    "$ref": "#/definitions/travelcore.EstimatedMoney"
+                }
+            }
+        },
+        "tripdetails.HotelOption": {
+            "type": "object",
+            "properties": {
+                "currency": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "location": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "price": {
+                    "type": "integer"
+                },
+                "provider": {
+                    "type": "string"
+                },
+                "rating": {
+                    "type": "number"
+                },
+                "review_link": {
+                    "type": "string"
+                },
+                "selected": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "tripdetails.ManualActivityDTO": {
+            "type": "object",
+            "required": [
+                "day_label",
+                "kind",
+                "location",
+                "title"
+            ],
+            "properties": {
+                "day_label": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "kind": {
+                    "type": "string"
+                },
+                "location": {
+                    "type": "string"
+                },
+                "price": {
+                    "type": "integer"
+                },
+                "source_link": {
+                    "type": "string"
+                },
+                "source_name": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "tripdetails.ReviewSummary": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "kind": {
+                    "type": "string"
+                },
+                "source_link": {
+                    "type": "string"
+                },
+                "source_name": {
+                    "type": "string"
+                },
+                "summary": {
+                    "type": "string"
+                },
+                "target_name": {
+                    "type": "string"
+                }
+            }
+        },
+        "tripdetails.TransportOption": {
+            "type": "object",
+            "properties": {
+                "arrival": {
+                    "type": "string"
+                },
+                "currency": {
+                    "type": "string"
+                },
+                "departure": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "destination": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "mode": {
+                    "type": "string"
+                },
+                "origin": {
+                    "type": "string"
+                },
+                "price": {
+                    "type": "integer"
+                },
+                "provider": {
+                    "type": "string"
+                },
+                "selected": {
+                    "type": "boolean"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "tripdetails.TripDetailsResponse": {
+            "type": "object",
+            "properties": {
+                "availableModes": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "budget": {
+                    "$ref": "#/definitions/travelcore.BudgetBreakdown"
+                },
+                "cashback": {
+                    "$ref": "#/definitions/travelcore.CashbackInfo"
+                },
+                "challenges": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/travelcore.TravelChallenge"
+                    }
+                },
+                "currency": {
+                    "type": "string"
+                },
+                "durationDays": {
+                    "type": "integer"
+                },
+                "endDate": {
+                    "type": "string"
+                },
+                "map": {
+                    "$ref": "#/definitions/travelcore.TripMap"
+                },
+                "modeVariants": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "$ref": "#/definitions/travelcore.ModeVariant"
+                    }
+                },
+                "peopleCount": {
+                    "type": "integer"
+                },
+                "routeNavigator": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/travelcore.RouteStop"
+                    }
+                },
+                "segments": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/travelcore.ItinerarySegment"
+                    }
+                },
+                "selectedMode": {
+                    "type": "string"
+                },
+                "startDate": {
+                    "type": "string"
+                },
+                "subtitle": {
+                    "type": "string"
+                },
+                "summary": {
+                    "$ref": "#/definitions/travelcore.TripSummary"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "tripId": {
+                    "type": "string"
+                },
+                "visa": {
+                    "$ref": "#/definitions/travelcore.VisaInfo"
+                },
+                "warnings": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/travelcore.SmartWarning"
+                    }
+                }
+            }
+        },
+        "tripdetails.VisaInfo": {
+            "type": "object",
+            "properties": {
+                "citizenship": {
+                    "type": "string"
+                },
+                "confidence": {
+                    "type": "string"
+                },
+                "destinationCountry": {
+                    "type": "string"
+                },
+                "estimatedCost": {
+                    "$ref": "#/definitions/travelcore.Money"
+                },
+                "notes": {
+                    "type": "string"
+                },
+                "processingTimeDays": {
+                    "type": "integer"
+                },
+                "required": {
+                    "type": "boolean"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "tripplanning.ChatMessageDTO": {
+            "type": "object",
+            "required": [
+                "content"
+            ],
+            "properties": {
+                "action": {
+                    "type": "string"
+                },
+                "content": {
+                    "type": "string",
+                    "minLength": 2
+                }
+            }
+        },
+        "tripplanning.CreateTripDTO": {
+            "type": "object",
+            "required": [
+                "title"
+            ],
+            "properties": {
+                "title": {
+                    "type": "string",
+                    "minLength": 3
+                }
+            }
+        },
+        "tripplanning.PatchTripDTO": {
+            "type": "object",
+            "properties": {
+                "budget": {
+                    "type": "integer"
+                },
+                "citizenship": {
+                    "type": "string"
+                },
+                "destination_city": {
+                    "type": "string"
+                },
+                "destination_country": {
+                    "type": "string"
+                },
+                "end_date": {
+                    "type": "string"
+                },
+                "event_interest": {
+                    "type": "boolean"
+                },
+                "hotel_preferences": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "insurance_needed": {
+                    "type": "boolean"
+                },
+                "interests": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "origin_city": {
+                    "type": "string"
+                },
+                "start_date": {
+                    "type": "string"
+                },
+                "transport_type": {
+                    "type": "string"
+                },
+                "travelers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/travelcore.TravelerInput"
+                    }
+                },
+                "trip_purpose": {
+                    "type": "string"
+                }
+            }
+        },
+        "tripplanning.PlanningChatResponse": {
+            "type": "object",
+            "properties": {
+                "assistant_hints": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "messages": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/travelcore.PlanningMessage"
+                    }
+                },
+                "session_id": {
+                    "type": "string"
+                },
+                "trip": {
+                    "$ref": "#/definitions/travelcore.PlanningTripResponse"
+                }
+            }
+        },
+        "tripplanning.PlanningTripResponse": {
+            "type": "object",
+            "properties": {
+                "chat_entrypoints": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "missing_fields": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/travelcore.MissingField"
+                    }
+                },
+                "normalized_fields": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "any"
+                    }
+                },
+                "ready_for_confirmation": {
+                    "type": "boolean"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "trip_id": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "tripplanning.TripDetailsResponse": {
+            "type": "object",
+            "properties": {
+                "availableModes": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "budget": {
+                    "$ref": "#/definitions/travelcore.BudgetBreakdown"
+                },
+                "cashback": {
+                    "$ref": "#/definitions/travelcore.CashbackInfo"
+                },
+                "challenges": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/travelcore.TravelChallenge"
+                    }
+                },
+                "currency": {
+                    "type": "string"
+                },
+                "durationDays": {
+                    "type": "integer"
+                },
+                "endDate": {
+                    "type": "string"
+                },
+                "map": {
+                    "$ref": "#/definitions/travelcore.TripMap"
+                },
+                "modeVariants": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "$ref": "#/definitions/travelcore.ModeVariant"
+                    }
+                },
+                "peopleCount": {
+                    "type": "integer"
+                },
+                "routeNavigator": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/travelcore.RouteStop"
+                    }
+                },
+                "segments": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/travelcore.ItinerarySegment"
+                    }
+                },
+                "selectedMode": {
+                    "type": "string"
+                },
+                "startDate": {
+                    "type": "string"
+                },
+                "subtitle": {
+                    "type": "string"
+                },
+                "summary": {
+                    "$ref": "#/definitions/travelcore.TripSummary"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "tripId": {
+                    "type": "string"
+                },
+                "visa": {
+                    "$ref": "#/definitions/travelcore.VisaInfo"
+                },
+                "warnings": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/travelcore.SmartWarning"
+                    }
                 }
             }
         }
