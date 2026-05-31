@@ -27,6 +27,7 @@ final class TravelAPIClient {
     private let baseURL: URL
     private let session: URLSession
     private let decoder: JSONDecoder
+    private let encoder: JSONEncoder
     let useMockFallback: Bool
 
     init(
@@ -44,6 +45,10 @@ final class TravelAPIClient {
         // snake_case keys (like session_id, missing_fields) are converted.
         d.keyDecodingStrategy = .convertFromSnakeCase
         self.decoder = d
+
+        let e = JSONEncoder()
+        e.keyEncodingStrategy = .convertToSnakeCase
+        self.encoder = e
     }
 
     /// Client that always returns mock data without attempting network calls.
@@ -81,12 +86,16 @@ final class TravelAPIClient {
         return try await post("trips/\(tripId)/chat/messages", body: body)
     }
 
+    func patchTrip(tripId: String, request: PatchTripRequest) async throws -> PlanningTripResponse {
+        try await patch("trips/\(tripId)", body: request)
+    }
+
     func confirmTrip(tripId: String) async throws -> TripDetailsResponse {
-        try await postEmpty("trips/\(tripId)/confirm", fallback: MockTravelData.tripDetails)
+        try await postEmpty("trips/\(tripId)/confirm")
     }
 
     func regenerateTrip(tripId: String) async throws -> TripDetailsResponse {
-        try await postEmpty("trips/\(tripId)/regenerate", fallback: MockTravelData.tripDetails)
+        try await postEmpty("trips/\(tripId)/regenerate")
     }
 
     func getPlanningState(tripId: String) async throws -> PlanningChatResponse {
@@ -122,20 +131,24 @@ final class TravelAPIClient {
         var req = URLRequest(url: url)
         req.httpMethod = "POST"
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        req.httpBody = try JSONEncoder().encode(body)
+        req.httpBody = try encoder.encode(body)
         return try await execute(req)
     }
 
-    private func postEmpty<T: Decodable>(_ path: String, fallback: T) async throws -> T {
-        if useMockFallback { return fallback }
+    private func patch<Body: Encodable, Response: Decodable>(_ path: String, body: Body) async throws -> Response {
+        let url = try url(for: path)
+        var req = URLRequest(url: url)
+        req.httpMethod = "PATCH"
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.httpBody = try encoder.encode(body)
+        return try await execute(req)
+    }
+
+    private func postEmpty<T: Decodable>(_ path: String) async throws -> T {
         let url = try url(for: path)
         var req = URLRequest(url: url)
         req.httpMethod = "POST"
-        do {
-            return try await execute(req)
-        } catch {
-            return fallback
-        }
+        return try await execute(req)
     }
 
     private func execute<T: Decodable>(_ request: URLRequest) async throws -> T {

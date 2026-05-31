@@ -46,12 +46,14 @@ final class EntryFlowViewModel {
     var planningState: PlanningState = .idle
     var activeTripId: String?
     var planningMessages: [PlanningMessage] = []
-    var missingFields: [String] = []
+    var normalizedPlanningFields: [String: JSONValue] = [:]
+    var missingFields: [MissingField] = []
+    var missingFieldInputs: [String: String] = [:]
     var generatedTrip: TripDetailsResponse?
 
     var isPlanning: Bool {
         switch planningState {
-        case .idle, .confirmed, .failed: return false
+        case .idle, .confirmed: return false
         default: return true
         }
     }
@@ -149,6 +151,7 @@ final class EntryFlowViewModel {
         do {
             let creation = try await apiClient.createTrip(title: prompt)
             activeTripId = creation.tripId
+            applyPlanningTrip(creation)
             await continuePlanning(prompt: prompt)
         } catch {
             planningState = .failed("Could not start planning session.")
@@ -161,14 +164,35 @@ final class EntryFlowViewModel {
         do {
             let response = try await apiClient.sendPlanningMessage(tripId: tripId, content: prompt)
             planningMessages = response.messages
-            missingFields = response.missingFields
-            if response.missingFields.isEmpty {
-                planningState = .readyToConfirm
-            } else {
-                planningState = .collecting
-            }
+            applyPlanningTrip(response.trip)
         } catch {
             planningState = .failed("Could not send message.")
+        }
+    }
+
+    func bindingValue(for fieldKey: String) -> String {
+        missingFieldInputs[fieldKey] ?? prefilledValue(for: fieldKey)
+    }
+
+    func setBindingValue(_ value: String, for fieldKey: String) {
+        missingFieldInputs[fieldKey] = value
+    }
+
+    func submitMissingFields() async {
+        guard let tripId = activeTripId else { return }
+
+        let request = makePatchTripRequest()
+        if missingFields.contains(where: { $0.key == "budget" }) && request.budget == nil {
+            planningState = .failed("Budget must be a number.")
+            return
+        }
+
+        planningState = .collecting
+        do {
+            let response = try await apiClient.patchTrip(tripId: tripId, request: request)
+            applyPlanningTrip(response)
+        } catch {
+            planningState = .failed("Could not save trip details.")
         }
     }
 
@@ -189,7 +213,9 @@ final class EntryFlowViewModel {
     func resetPlanning() {
         activeTripId = nil
         planningMessages = []
+        normalizedPlanningFields = [:]
         missingFields = []
+        missingFieldInputs = [:]
         generatedTrip = nil
         planningState = .idle
     }
@@ -201,6 +227,61 @@ final class EntryFlowViewModel {
         self.recommendations = recommendations.recommendations
         selectedMode = recommendations.selectedMode
         state = .loaded
+    }
+
+    private func applyPlanningTrip(_ trip: PlanningTripResponse) {
+        activeTripId = trip.tripId
+        normalizedPlanningFields = trip.normalizedFields
+        missingFields = trip.missingFields
+
+        if case .failed = planningState {
+            planningState = .collecting
+        }
+
+        if trip.readyForConfirmation {
+            planningState = .readyToConfirm
+        } else {
+            planningState = .collecting
+        }
+
+        for field in trip.missingFields {
+            if missingFieldInputs[field.key]?.isEmpty != false {
+                missingFieldInputs[field.key] = prefilledValue(for: field.key)
+            }
+        }
+    }
+
+    private func prefilledValue(for fieldKey: String) -> String {
+        normalizedPlanningFields[fieldKey]?.stringValue ?? ""
+    }
+
+    private func makePatchTripRequest() -> PatchTripRequest {
+        PatchTripRequest(
+            originCity: normalizedInput(for: "origin_city"),
+            destinationCountry: normalizedInput(for: "destination_country"),
+            destinationCity: normalizedInput(for: "destination_city"),
+            startDate: normalizedInput(for: "start_date"),
+            endDate: normalizedInput(for: "end_date"),
+            budget: normalizedBudgetInput(),
+            transportType: normalizedInput(for: "transport_type"),
+            tripPurpose: normalizedInput(for: "trip_purpose"),
+            citizenship: normalizedInput(for: "citizenship"),
+            hotelPreferences: nil,
+            eventInterest: nil,
+            insuranceNeeded: nil,
+            interests: nil
+        )
+    }
+
+    private func normalizedInput(for fieldKey: String) -> String? {
+        let value = missingFieldInputs[fieldKey]?.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let value, !value.isEmpty else { return nil }
+        return value
+    }
+
+    private func normalizedBudgetInput() -> Int? {
+        guard let budgetString = normalizedInput(for: "budget") else { return nil }
+        return Int(budgetString)
     }
 
     private func matchesBudget(_ recommendation: TripRecommendation) -> Bool {

@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 struct EntryFlowView: View {
     @Environment(EntryFlowViewModel.self) private var viewModel
@@ -92,6 +93,10 @@ private struct PlanningStatusBanner: View {
                 }
             }
 
+            if !viewModel.missingFields.isEmpty {
+                MissingFieldsEditor(viewModel: viewModel)
+            }
+
             if viewModel.canConfirm {
                 Button {
                     Task { await viewModel.confirmTrip() }
@@ -153,12 +158,13 @@ private struct PlanningStatusBanner: View {
 }
 
 private struct MissingFieldsRow: View {
-    let fields: [String]
+    let fields: [MissingField]
+
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 6) {
-                ForEach(fields, id: \.self) { field in
-                    Text(field)
+                ForEach(fields) { field in
+                    Text(field.label)
                         .font(.caption.weight(.semibold))
                         .padding(.horizontal, 9)
                         .padding(.vertical, 5)
@@ -166,6 +172,71 @@ private struct MissingFieldsRow: View {
                         .foregroundStyle(.orange)
                 }
             }
+        }
+    }
+}
+
+private struct MissingFieldsEditor: View {
+    @Bindable var viewModel: EntryFlowViewModel
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            ForEach(viewModel.missingFields) { field in
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(field.label)
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.primary)
+
+                    TextField(
+                        field.prompt,
+                        text: Binding(
+                            get: { viewModel.bindingValue(for: field.key) },
+                            set: { viewModel.setBindingValue($0, for: field.key) }
+                        )
+                    )
+                    .textInputAutocapitalization(textInputAutocapitalization(for: field.key))
+                    .keyboardType(keyboardType(for: field.key))
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 10)
+                    .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+
+                    Text(field.prompt)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            Button {
+                Task { await viewModel.submitMissingFields() }
+            } label: {
+                Label("Save trip details", systemImage: "square.and.arrow.down")
+                    .font(.subheadline.weight(.semibold))
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+                    .background(.orange, in: .capsule)
+                    .foregroundStyle(.white)
+            }
+            .buttonStyle(.plain)
+        }
+    }
+
+    private func keyboardType(for fieldKey: String) -> UIKeyboardType {
+        switch fieldKey {
+        case "budget":
+            return .numberPad
+        case "start_date", "end_date":
+            return .numbersAndPunctuation
+        default:
+            return .default
+        }
+    }
+
+    private func textInputAutocapitalization(for fieldKey: String) -> TextInputAutocapitalization {
+        switch fieldKey {
+        case "start_date", "end_date", "budget":
+            return .never
+        default:
+            return .words
         }
     }
 }
