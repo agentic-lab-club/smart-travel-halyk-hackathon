@@ -1,11 +1,28 @@
 ﻿# smart-travel-halyk-hackathon
 
+credentials: Agentic Lab IITU
+team: Didar, Artem, Alexey, Yarik
+
 Мы команда Agentic Lab, участвуем в Хакатоне от Halyk Banl Kazakhstan (superapp), этот репозиторий это наше решение и выбранный кейс, из списка [docs\Halyk_Кейсы_Хакатон.xlsx](docs\Halyk_Кейсы_Хакатон.xlsx), мы выбрали кейс: `9) Smart Travel Companion — Halyk Travel как центр управления поездкой`.
 Это монорепозиторий.
 
+## Architecture
+
+> from [ARCHITECTURE.md](ARCHITECTURE.md)
+
+C4-Diagram-Container-Diagram:
+
+![C4-Diagram-Container-Diagram.png](/docs/assets/C4-Diagram-Container-Diagram.png)
+
+---
+
+Runtime Sequence:
+
+![Runtime-Sequence.png](/docs/assets/Runtime-Sequence.png)
+
 ## Structure (обьеснение структуры папок)
 
-> for important files/folders References descriptions check the [REFERENCES.md](REFERENCES.md)
+> for important files/folders References descriptions check the [STRUCTURES.md](STRUCTURES.md)
 
 ## Наш выбранный Кейс
 
@@ -23,5 +40,4 @@
 | Артефакт для сдачи | CJM (от билета до завершения поездки) + 5–7 экранов MVP + финансовая модель travel LTV + схема интеграций (авиа/жд, отели, страховка, трансфер, Kino.kz, Halyk payments, бонусная система) + презентация |
 
 ## Notes
-
 
