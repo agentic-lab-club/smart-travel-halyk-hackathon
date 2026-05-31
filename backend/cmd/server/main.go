@@ -27,12 +27,17 @@ import (
 	"time"
 
 	"github.com/agentic-lab-club/smart-travel-halyk-hackathon/backend/internal/healthcheck"
-	"github.com/agentic-lab-club/smart-travel-halyk-hackathon/backend/internal/trip"
+	"github.com/agentic-lab-club/smart-travel-halyk-hackathon/backend/internal/hoteldetails"
+	"github.com/agentic-lab-club/smart-travel-halyk-hackathon/backend/internal/profile"
+	"github.com/agentic-lab-club/smart-travel-halyk-hackathon/backend/internal/recommendations"
+	"github.com/agentic-lab-club/smart-travel-halyk-hackathon/backend/internal/tripdetails"
+	"github.com/agentic-lab-club/smart-travel-halyk-hackathon/backend/internal/tripplanning"
 	"github.com/agentic-lab-club/smart-travel-halyk-hackathon/backend/pkg/config"
 	"github.com/agentic-lab-club/smart-travel-halyk-hackathon/backend/pkg/database"
 	md "github.com/agentic-lab-club/smart-travel-halyk-hackathon/backend/pkg/http/middlewares"
 	"github.com/agentic-lab-club/smart-travel-halyk-hackathon/backend/pkg/logger"
 	"github.com/agentic-lab-club/smart-travel-halyk-hackathon/backend/pkg/metrics"
+	"github.com/agentic-lab-club/smart-travel-halyk-hackathon/backend/pkg/travelcore"
 	"github.com/gofiber/fiber/v3"
 	"github.com/gofiber/fiber/v3/middleware/cors"
 	"github.com/gofiber/fiber/v3/middleware/recover"
@@ -100,7 +105,12 @@ func main() {
 
 	registerDocsRoutes(server)
 	healthcheck.Init(server, trackedDB, cfg)
-	trip.Init(server, trackedDB, cfg)
+	core := travelcore.NewCoreService(trackedDB, cfg)
+	tripplanning.Init(server, core)
+	tripdetails.Init(server, core)
+	profile.Init(server, core)
+	recommendations.Init(server, core)
+	hoteldetails.Init(server, core)
 
 	log.Info().Str("event", "init_http_server_success").Int("port", cfg.Server.Port).Msg("HTTP server initialized successfully")
 

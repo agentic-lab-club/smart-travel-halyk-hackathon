@@ -26,7 +26,7 @@ func NewHandler(service *Service) *Handler {
 // @Success 201 {object} TripDetailsResponse
 // @Failure 400 {object} map[string]interface{}
 // @Failure 500 {object} map[string]interface{}
-// @Router /api/v1/trips [post]
+// Legacy swagger route removed to avoid duplicate contracts during refactor.
 func (h *Handler) CreateTrip(c fiber.Ctx) error {
 	c.Locals("log").(*zerolog.Logger).Info().Str("event", "trip_create_start").Msg("Create trip started")
 	dto := c.Locals("body").(CreateTripDTO)
@@ -46,7 +46,7 @@ func (h *Handler) CreateTrip(c fiber.Ctx) error {
 // @Success 200 {object} TripDetailsResponse
 // @Failure 404 {object} map[string]interface{}
 // @Failure 500 {object} map[string]interface{}
-// @Router /api/v1/trips/{tripId} [get]
+// Legacy swagger route removed to avoid duplicate contracts during refactor.
 func (h *Handler) GetTrip(c fiber.Ctx) error {
 	data, err := h.service.GetTrip(c.Locals("tripId").(uuid.UUID))
 	return h.tripDetails(c, data, err)
@@ -64,7 +64,7 @@ func (h *Handler) GetTrip(c fiber.Ctx) error {
 // @Failure 400 {object} map[string]interface{}
 // @Failure 404 {object} map[string]interface{}
 // @Failure 500 {object} map[string]interface{}
-// @Router /api/v1/trips/{tripId} [patch]
+// Legacy swagger route removed to avoid duplicate contracts during refactor.
 func (h *Handler) PatchTrip(c fiber.Ctx) error {
 	data, err := h.service.PatchTrip(c.Locals("tripId").(uuid.UUID), c.Locals("body").(PatchTripDTO))
 	return h.tripDetails(c, data, err)
@@ -82,7 +82,7 @@ func (h *Handler) PatchTrip(c fiber.Ctx) error {
 // @Failure 400 {object} map[string]interface{}
 // @Failure 404 {object} map[string]interface{}
 // @Failure 500 {object} map[string]interface{}
-// @Router /api/v1/trips/{tripId}/chat/messages [post]
+// Legacy swagger route removed to avoid duplicate contracts during refactor.
 func (h *Handler) AddChatMessage(c fiber.Ctx) error {
 	data, err := h.service.AddChatMessage(c.Context(), c.Locals("tripId").(uuid.UUID), c.Locals("body").(ChatMessageDTO))
 	if err != nil {
@@ -103,7 +103,7 @@ func (h *Handler) AddChatMessage(c fiber.Ctx) error {
 // @Success 200 {object} ChatResponse
 // @Failure 404 {object} map[string]interface{}
 // @Failure 500 {object} map[string]interface{}
-// @Router /api/v1/trips/{tripId}/chat/messages [get]
+// Legacy swagger route removed to avoid duplicate contracts during refactor.
 func (h *Handler) GetChatMessages(c fiber.Ctx) error {
 	data, err := h.service.GetChatMessages(c.Locals("tripId").(uuid.UUID))
 	if err != nil {
@@ -124,7 +124,7 @@ func (h *Handler) GetChatMessages(c fiber.Ctx) error {
 // @Success 200 {object} TripDetailsResponse
 // @Failure 404 {object} map[string]interface{}
 // @Failure 500 {object} map[string]interface{}
-// @Router /api/v1/trips/{tripId}/confirm [post]
+// Legacy swagger route removed to avoid duplicate contracts during refactor.
 func (h *Handler) ConfirmTrip(c fiber.Ctx) error {
 	data, err := h.service.ConfirmTrip(c.Context(), c.Locals("tripId").(uuid.UUID))
 	return h.tripDetails(c, data, err)
@@ -139,7 +139,7 @@ func (h *Handler) ConfirmTrip(c fiber.Ctx) error {
 // @Success 200 {object} TripDetailsResponse
 // @Failure 404 {object} map[string]interface{}
 // @Failure 500 {object} map[string]interface{}
-// @Router /api/v1/trips/{tripId}/regenerate [post]
+// Legacy swagger route removed to avoid duplicate contracts during refactor.
 func (h *Handler) RegenerateTrip(c fiber.Ctx) error {
 	data, err := h.service.RegenerateTrip(c.Context(), c.Locals("tripId").(uuid.UUID))
 	return h.tripDetails(c, data, err)
@@ -154,7 +154,7 @@ func (h *Handler) RegenerateTrip(c fiber.Ctx) error {
 // @Success 200 {array} TransportOption
 // @Failure 404 {object} map[string]interface{}
 // @Failure 500 {object} map[string]interface{}
-// @Router /api/v1/trips/{tripId}/options/transport [get]
+// Legacy swagger route removed to avoid duplicate contracts during refactor.
 func (h *Handler) GetTransportOptions(c fiber.Ctx) error {
 	data, err := h.service.GetTransportOptions(c.Locals("tripId").(uuid.UUID))
 	if err != nil {
@@ -176,7 +176,7 @@ func (h *Handler) GetTransportOptions(c fiber.Ctx) error {
 // @Success 200 {object} TripDetailsResponse
 // @Failure 404 {object} map[string]interface{}
 // @Failure 500 {object} map[string]interface{}
-// @Router /api/v1/trips/{tripId}/options/transport/{optionId}/select [post]
+// Legacy swagger route removed to avoid duplicate contracts during refactor.
 func (h *Handler) SelectTransport(c fiber.Ctx) error {
 	data, err := h.service.SelectTransport(c.Locals("tripId").(uuid.UUID), c.Locals("optionId").(uuid.UUID))
 	return h.tripDetails(c, data, err)
@@ -191,7 +191,7 @@ func (h *Handler) SelectTransport(c fiber.Ctx) error {
 // @Success 200 {array} HotelOption
 // @Failure 404 {object} map[string]interface{}
 // @Failure 500 {object} map[string]interface{}
-// @Router /api/v1/trips/{tripId}/options/hotels [get]
+// Legacy swagger route removed to avoid duplicate contracts during refactor.
 func (h *Handler) GetHotelOptions(c fiber.Ctx) error {
 	data, err := h.service.GetHotelOptions(c.Locals("tripId").(uuid.UUID))
 	if err != nil {
@@ -213,7 +213,7 @@ func (h *Handler) GetHotelOptions(c fiber.Ctx) error {
 // @Success 200 {object} TripDetailsResponse
 // @Failure 404 {object} map[string]interface{}
 // @Failure 500 {object} map[string]interface{}
-// @Router /api/v1/trips/{tripId}/options/hotels/{optionId}/select [post]
+// Legacy swagger route removed to avoid duplicate contracts during refactor.
 func (h *Handler) SelectHotel(c fiber.Ctx) error {
 	data, err := h.service.SelectHotel(c.Locals("tripId").(uuid.UUID), c.Locals("optionId").(uuid.UUID))
 	return h.tripDetails(c, data, err)
@@ -231,7 +231,7 @@ func (h *Handler) SelectHotel(c fiber.Ctx) error {
 // @Failure 400 {object} map[string]interface{}
 // @Failure 404 {object} map[string]interface{}
 // @Failure 500 {object} map[string]interface{}
-// @Router /api/v1/trips/{tripId}/activities [post]
+// Legacy swagger route removed to avoid duplicate contracts during refactor.
 func (h *Handler) AddActivity(c fiber.Ctx) error {
 	data, err := h.service.AddActivity(c.Locals("tripId").(uuid.UUID), c.Locals("body").(ManualActivityDTO))
 	return h.tripDetails(c, data, err)
@@ -246,7 +246,7 @@ func (h *Handler) AddActivity(c fiber.Ctx) error {
 // @Success 200 {object} BudgetSummary
 // @Failure 404 {object} map[string]interface{}
 // @Failure 500 {object} map[string]interface{}
-// @Router /api/v1/trips/{tripId}/budget [get]
+// Legacy swagger route removed to avoid duplicate contracts during refactor.
 func (h *Handler) GetBudget(c fiber.Ctx) error {
 	data, err := h.service.GetBudget(c.Locals("tripId").(uuid.UUID))
 	if err != nil {
@@ -267,7 +267,7 @@ func (h *Handler) GetBudget(c fiber.Ctx) error {
 // @Success 200 {object} VisaInfo
 // @Failure 404 {object} map[string]interface{}
 // @Failure 500 {object} map[string]interface{}
-// @Router /api/v1/trips/{tripId}/visa [get]
+// Legacy swagger route removed to avoid duplicate contracts during refactor.
 func (h *Handler) GetVisa(c fiber.Ctx) error {
 	data, err := h.service.GetVisa(c.Locals("tripId").(uuid.UUID))
 	if err != nil {
@@ -288,7 +288,7 @@ func (h *Handler) GetVisa(c fiber.Ctx) error {
 // @Success 200 {array} ReviewSummary
 // @Failure 404 {object} map[string]interface{}
 // @Failure 500 {object} map[string]interface{}
-// @Router /api/v1/trips/{tripId}/reviews [get]
+// Legacy swagger route removed to avoid duplicate contracts during refactor.
 func (h *Handler) GetReviews(c fiber.Ctx) error {
 	data, err := h.service.GetReviews(c.Locals("tripId").(uuid.UUID))
 	if err != nil {
