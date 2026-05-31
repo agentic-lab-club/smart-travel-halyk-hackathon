@@ -12,13 +12,17 @@ team: Didar, Artem, Alexey, Yarik
 
 C4-Diagram-Container-Diagram:
 
-![C4-Diagram-Container-Diagram.png](/docs/assets/C4-Diagram-Container-Diagram.png)
+![C4-Diagram-Container-Diagram-v2.png](/docs/assets/C4-Diagram-Container-Diagram-v2.png)
 
 ---
 
 Runtime Sequence:
 
 ![Runtime-Sequence.png](/docs/assets/Runtime-Sequence.png)
+
+## Demo (video)
+
+![docs\assets\video\Timeline1.gif](docs\assets\video\Timeline1.gif)
 
 ## Structure (обьеснение структуры папок)
 
