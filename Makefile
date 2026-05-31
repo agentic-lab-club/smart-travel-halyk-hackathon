@@ -8,7 +8,9 @@ sent:
 swagger-backend:
 	$(MAKE) -C backend swagger
 
-BACKEND_SERVICE_NAME=golang
+BACKEND_SERVICE_NAME=backend
+BACKEND_TEST_SERVICE_NAME=backend-test
+AGENT_SERVICE_NAME=agent
 
 # for localhost usage!
 NAMED_COMPOSE_FILE = docker-compose.yml
@@ -29,13 +31,28 @@ logs: ## Show logs
 rebuild: ## Rebuild Container's
 	@docker compose -f $(NAMED_COMPOSE_FILE) up --build -d
 
-# docker compose run --rm --no-deps golang-test go test ./internal/healthcheck
+# docker compose run --rm --no-deps backend-test go test ./internal/healthcheck
 # go test -v (for detailed log)
-test: ## Run Go tests inside docker
-	@docker compose -f $(NAMED_COMPOSE_FILE) run --rm --no-deps golang-test go test ./...
+test: test-all ## Run all existing automated tests inside docker
 
-test-build: ## Build the test image (after deps changes)
-	@docker compose -f $(NAMED_COMPOSE_FILE) build golang-test
+test-all: test-backend test-agent ## Run backend and agent tests
+
+test-backend: ## Run all backend Go tests inside docker
+	@docker compose -f $(NAMED_COMPOSE_FILE) run --rm --no-deps $(BACKEND_TEST_SERVICE_NAME) go test -v ./...
+
+test-agent: ## Run all agent Python tests inside docker
+	@docker compose -f $(NAMED_COMPOSE_FILE) run --rm --no-deps $(AGENT_SERVICE_NAME) python -m unittest test_planning_service.py test_api.py
+
+test-build: test-build-backend ## Backward-compatible alias for backend test image build
+
+test-build-backend: ## Build the backend test image
+	@docker compose -f $(NAMED_COMPOSE_FILE) build $(BACKEND_TEST_SERVICE_NAME)
+
+test-backend-integration-build: ## Build backend integration test images in backend module
+	@$(MAKE) -C backend integration-test-build
+
+test-backend-integration: ## Run backend integration suite in backend module
+	@$(MAKE) -C backend integration-test
 
 sh:
 	@docker compose -f $(NAMED_COMPOSE_FILE) exec -it $(BACKEND_SERVICE_NAME) sh
@@ -48,5 +65,4 @@ swagger:
 #psql:
 #	@docker compose -f $(NAMED_COMPOSE_FILE) exec -it $(DATABASE_SERVICE_NAME) psql -d directus_dev -U directus_dev
 
-.PHONY: sent swagger-backend up down build logs rebuild sh swagger test test-build yc-push-staging yc-push-prod yc-setup yc-list-images verify-build install-hooks
-
+.PHONY: sent swagger-backend up down build logs rebuild sh swagger test test-all test-backend test-agent test-build test-build-backend test-backend-integration-build test-backend-integration yc-push-staging yc-push-prod yc-setup yc-list-images verify-build install-hooks
