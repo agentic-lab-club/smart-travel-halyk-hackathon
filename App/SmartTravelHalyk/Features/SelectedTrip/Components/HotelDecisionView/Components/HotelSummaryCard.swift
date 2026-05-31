@@ -18,19 +18,17 @@ struct HotelSummaryCard: View {
                             .font(.headline)
                             .foregroundStyle(.primary)
 
-                        if let district = hotel.district {
-                            Label(district, systemImage: "mappin.circle.fill")
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
-                        }
+                        HStack {
+                            if let rating = hotel.rating {
+                                Text(String(format: "%.1f", rating))
+                                    .font(.title2.bold())
+                                    .foregroundStyle(.green)
+                            }
 
-                        if let stars = hotel.stars {
-                            HStack(spacing: 2) {
-                                ForEach(0..<stars, id: \.self) { _ in
-                                    Image(systemName: "star.fill")
-                                        .font(.caption2)
-                                        .foregroundStyle(.orange)
-                                }
+                            if let district = hotel.district {
+                                Text(district)
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
                             }
                         }
                     }
@@ -38,20 +36,6 @@ struct HotelSummaryCard: View {
                     Spacer()
 
                     HStack(spacing: 4) {
-                        if let rating = hotel.rating {
-                            VStack(alignment: .trailing, spacing: 2) {
-                                Text(String(format: "%.1f", rating))
-                                    .font(.title2.bold())
-                                    .foregroundStyle(.green)
-                                if let label = hotel.ratingLabel {
-                                    Text(label)
-                                        .font(.caption2)
-                                        .foregroundStyle(.secondary)
-                                        .multilineTextAlignment(.trailing)
-                                }
-                            }
-                        }
-
                         Image(systemName: "chevron.right")
                             .font(.caption.weight(.semibold))
                             .foregroundStyle(.tertiary)
@@ -92,44 +76,33 @@ struct HotelSummaryCard: View {
                 Text(hotel.reason)
                     .font(.caption)
                     .foregroundStyle(.green)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
                     .background(Color.green.opacity(0.1), in: RoundedRectangle(cornerRadius: 8))
-
-                if !selectedRoomId.isEmpty {
-                    HStack(spacing: 6) {
-                        Image(systemName: "checkmark.circle.fill")
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(.green)
-                        Text("Room selected")
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(.green)
-                        Spacer()
-                        if fullHotel != nil {
-                            Text("Change room")
-                                .font(.caption.weight(.semibold))
-                                .foregroundStyle(.secondary)
-                            Image(systemName: "arrow.right")
-                                .font(.caption.weight(.semibold))
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                } else if fullHotel != nil {
-                    HStack {
-                        Spacer()
-                        Text("View rooms, reviews & location")
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(.green)
-                        Image(systemName: "arrow.right")
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(.green)
-                    }
-                }
             }
             .padding(14)
             .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
         }
         .buttonStyle(.plain)
         .disabled(fullHotel == nil)
+    }
+}
+
+#Preview {
+    let hotel = MockTravelData.tripDetails.segments
+        .compactMap { seg -> HotelDetails? in
+            if case .hotel(let h) = seg.details { return h }
+            return nil
+        }.first!
+
+    NavigationStack {
+        HotelSummaryCard(
+            hotel: hotel,
+            fullHotel: MockTravelData.hotelDetailsFull,
+            selectedRoomId: .constant(hotel.selectedRoomId ?? "")
+        )
+        .padding()
+        .background(Color(.systemGroupedBackground))
     }
 }
