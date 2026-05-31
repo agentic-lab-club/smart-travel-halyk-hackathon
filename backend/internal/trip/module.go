@@ -17,6 +17,12 @@ func RegisterRoutes(server *fiber.App, db *database.TrackedDB, cfg *config.Confi
 	service := NewService(repo, NewPlannerClient(cfg), cfg)
 	handler := NewHandler(service)
 
+	// Consumer read-model endpoints (user profile, recommendations, hotel details)
+	consumer := server.Group("/api/v1")
+	consumer.Get("/user-profile", GetUserProfile)
+	consumer.Get("/recommendations", GetRecommendations)
+	consumer.Get("/hotels/:hotelId", GetHotelDetails)
+
 	trips := server.Group("/api/v1/trips")
 	trips.Post("/", md.BindAndValidate[CreateTripDTO](), handler.CreateTrip)
 	trips.Get("/:tripId", md.ValidateParam[uuid.UUID]("tripId"), handler.GetTrip)

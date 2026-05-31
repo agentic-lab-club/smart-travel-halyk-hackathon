@@ -56,7 +56,6 @@ struct RecommendationCard: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .frame(height: 450)
         .background {
-            // FIXME: Add image from api
             Image("ExampleTripImage")
                 .scaledToFill()
                 .clipped()

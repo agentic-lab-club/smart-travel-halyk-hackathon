@@ -146,7 +146,7 @@ private struct BudgetTile: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Image(systemName: iconForCategory(item.category))
+            Image(systemName: item.category.icon)
                 .font(.title2.weight(.medium))
                 .foregroundStyle(.primary)
                 .frame(width: 36, height: 36)
@@ -165,23 +165,6 @@ private struct BudgetTile: View {
         .frame(maxWidth: .infinity, minHeight: 130, alignment: .leading)
         .padding(14)
         .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16))
-    }
-
-    private func iconForCategory(_ cat: BudgetCategory) -> String {
-        switch cat {
-        case .flights:            return "airplane"
-        case .hotels:             return "bed.double.fill"
-        case .localTransport:     return "bus.fill"
-        case .intercityTransport: return "train.side.front.car"
-        case .food:               return "fork.knife"
-        case .activities:         return "binoculars.fill"
-        case .events:             return "ticket.fill"
-        case .visa:               return "doc.badge.arrow.up"
-        case .insurance:          return "shield.fill"
-        case .souvenirs:          return "bag.fill"
-        case .buffer:             return "plus.circle.fill"
-        case .cashbackDiscount:   return "creditcard.fill"
-        }
     }
 }
 
@@ -204,18 +187,6 @@ private struct CashbackDiscountRow: View {
         .background(Color.green.opacity(0.08), in: RoundedRectangle(cornerRadius: 12))
         .overlay {
             RoundedRectangle(cornerRadius: 12).stroke(Color.green.opacity(0.25), lineWidth: 1)
-        }
-    }
-}
-
-// MARK: - TripMode helpers
-
-extension TripMode {
-    var fullTitle: String {
-        switch self {
-        case .economy:  return "Budget trip"
-        case .balanced: return "Balanced"
-        case .comfort:  return "Comfort"
         }
     }
 }
