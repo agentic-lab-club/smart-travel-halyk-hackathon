@@ -12,7 +12,7 @@ team: Didar, Artem, Alexey, Yarik
 
 C4-Diagram-Container-Diagram:
 
-![C4-Diagram-Container-Diagram.png](/docs/assets/C4-Diagram-Container-Diagram-v2.png)
+![C4-Diagram-Container-Diagram.png](/docs/assets/C4-Diagram-Container-Diagram.png)
 
 ---
 
